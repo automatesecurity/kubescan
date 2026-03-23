@@ -26,6 +26,7 @@ go.work.sum
 
 # env file
 .env
+!examples/fs-demo/.env
 
 # Editor/IDE
 # .idea/
