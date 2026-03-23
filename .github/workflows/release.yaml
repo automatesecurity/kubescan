@@ -198,21 +198,21 @@ jobs:
             ghcr.io/automatesecurity/kubescan-node-collector@${{ steps.image_node_collector.outputs.digest }}
 
       - name: Attest kubescan image provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/automatesecurity/kubescan
           subject-digest: ${{ steps.image_cli.outputs.digest }}
           push-to-registry: true
 
       - name: Attest kubescan-operator image provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/automatesecurity/kubescan-operator
           subject-digest: ${{ steps.image_operator.outputs.digest }}
           push-to-registry: true
 
       - name: Attest kubescan-node-collector image provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/automatesecurity/kubescan-node-collector
           subject-digest: ${{ steps.image_node_collector.outputs.digest }}
