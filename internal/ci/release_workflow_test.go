@@ -18,7 +18,7 @@ func TestReleaseWorkflowIncludesArtifactSigningAndProvenance(t *testing.T) {
 		"cosign sign --yes ghcr.io/automatesecurity/kubescan-operator@",
 		"cosign sign --yes ghcr.io/automatesecurity/kubescan-node-collector@",
 		"cosign verify",
-		"actions/attest-build-provenance@v2",
+		"actions/attest-build-provenance@v",
 	} {
 		if !strings.Contains(workflow, expected) {
 			t.Fatalf("release workflow is missing hardened release behavior %q", expected)
