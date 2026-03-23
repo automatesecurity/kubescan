@@ -2118,10 +2118,6 @@ The shipped operator deployment manifests also include baseline runtime hardenin
 - Operator reports are stored as cluster-scoped `ScanReport` CRDs with bounded finding and attack-path lists plus optional stale-report pruning and TTL-based cleanup; large clusters may still require tighter caps or namespace-scoped policies
 - Operator remote SBOM fetching currently supports HTTPS URLs, OCI image references, and provider-native GitHub release assets with interval-based caching plus independent background refresh; broader provider coverage is not implemented yet
 
-## Roadmap
-
-Roadmap, future TODOs, deferred exploration items, and planned expansion work now live in [kubescan_roadmap.md](./kubescan_roadmap.md).
-
 ## Contributing
 
 At this stage, contributions should preserve these constraints:
