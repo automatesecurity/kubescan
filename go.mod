@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/google/go-containerregistry v0.21.3
 	github.com/knqyf263/go-rpmdb v0.1.1
-	golang.org/x/term v0.37.0
+	golang.org/x/term v0.41.0
 	k8s.io/api v0.35.3
 	k8s.io/apimachinery v0.35.3
 	k8s.io/client-go v0.35.3
