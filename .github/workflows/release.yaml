@@ -94,7 +94,7 @@ jobs:
 
       - name: Build and push kubescan image
         id: image_cli
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -118,7 +118,7 @@ jobs:
 
       - name: Build and push kubescan-operator image
         id: image_operator
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.operator
@@ -142,7 +142,7 @@ jobs:
 
       - name: Build and push kubescan-node-collector image
         id: image_node_collector
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.node-collector
