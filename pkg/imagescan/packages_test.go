@@ -36,19 +36,19 @@ func TestParseDPKGStatus(t *testing.T) {
 
 func TestExtractSBOMFromFiles(t *testing.T) {
 	sbom := extractSBOMFromFiles("ghcr.io/acme/api:1.0.0", map[string][]byte{
-		"lib/apk/db/installed":  []byte("P:busybox\nV:1.36.1-r2\n\n"),
-		"var/lib/dpkg/status":   []byte("Package: libc6\nStatus: install ok installed\nVersion: 2.36-9+deb12u9\n\n"),
-		"app/package-lock.json": []byte(`{"packages":{"node_modules/lodash":{"version":"4.17.21"}}}`),
-		"app/yarn.lock":         []byte("\"left-pad@^1.3.0\":\n  version \"1.3.0\"\n"),
-		"app/go.mod":            []byte("module example.com/app\nrequire github.com/google/uuid v1.6.0\n"),
-		"app/pom.xml":           []byte("<project><dependencies><dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.13</version></dependency></dependencies></project>"),
-		"app/Cargo.lock":        []byte("[[package]]\nname = \"serde\"\nversion = \"1.0.210\"\n"),
-		"app/composer.lock":     []byte(`{"packages":[{"name":"symfony/console","version":"v7.1.0"}]}`),
+		"lib/apk/db/installed":   []byte("P:busybox\nV:1.36.1-r2\n\n"),
+		"var/lib/dpkg/status":    []byte("Package: libc6\nStatus: install ok installed\nVersion: 2.36-9+deb12u9\n\n"),
+		"app/package-lock.json":  []byte(`{"packages":{"node_modules/lodash":{"version":"4.17.21"}}}`),
+		"app/yarn.lock":          []byte("\"left-pad@^1.3.0\":\n  version \"1.3.0\"\n"),
+		"app/go.mod":             []byte("module example.com/app\nrequire github.com/google/uuid v1.6.0\n"),
+		"app/pom.xml":            []byte("<project><dependencies><dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.13</version></dependency></dependencies></project>"),
+		"app/Cargo.lock":         []byte("[[package]]\nname = \"serde\"\nversion = \"1.0.210\"\n"),
+		"app/composer.lock":      []byte(`{"packages":[{"name":"symfony/console","version":"v7.1.0"}]}`),
 		"app/packages.lock.json": []byte(`{"dependencies":{"Newtonsoft.Json":{"resolved":"13.0.3"}}}`),
-		"app/requirements.txt":  []byte("requests==2.32.3\n"),
-		"app/poetry.lock":       []byte("[[package]]\nname = \"fastapi\"\nversion = \"0.115.0\"\n"),
-		"app/Pipfile.lock":      []byte(`{"default":{"urllib3":{"version":"==2.2.3"}}}`),
-		"app/Gemfile.lock":      []byte("GEM\n  specs:\n    rack (3.1.7)\n\nPLATFORMS\n  ruby\n"),
+		"app/requirements.txt":   []byte("requests==2.32.3\n"),
+		"app/poetry.lock":        []byte("[[package]]\nname = \"fastapi\"\nversion = \"0.115.0\"\n"),
+		"app/Pipfile.lock":       []byte(`{"default":{"urllib3":{"version":"==2.2.3"}}}`),
+		"app/Gemfile.lock":       []byte("GEM\n  specs:\n    rack (3.1.7)\n\nPLATFORMS\n  ruby\n"),
 	})
 
 	if sbom.ImageRef != "ghcr.io/acme/api:1.0.0" {

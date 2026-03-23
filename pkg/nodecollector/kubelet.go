@@ -15,18 +15,18 @@ import (
 )
 
 type KubeletObservations struct {
-	NodeName                     string
-	KubeletConfigPath            string
-	AnonymousAuthEnabled         *bool
-	WebhookAuthenticationEnabled *bool
-	AuthorizationMode            string
+	NodeName                       string
+	KubeletConfigPath              string
+	AnonymousAuthEnabled           *bool
+	WebhookAuthenticationEnabled   *bool
+	AuthorizationMode              string
 	AuthenticationX509ClientCAFile string
-	ReadOnlyPort                 *int32
-	ProtectKernelDefaults        *bool
-	FailSwapOn                   *bool
-	RotateCertificates           *bool
-	ServerTLSBootstrap           *bool
-	SeccompDefault               *bool
+	ReadOnlyPort                   *int32
+	ProtectKernelDefaults          *bool
+	FailSwapOn                     *bool
+	RotateCertificates             *bool
+	ServerTLSBootstrap             *bool
+	SeccompDefault                 *bool
 }
 
 type kubeletConfiguration struct {
@@ -65,18 +65,18 @@ func LoadKubeletObservations(nodeName string, hostRoot string, kubeletConfigPath
 	}
 
 	return KubeletObservations{
-		NodeName:                     strings.TrimSpace(nodeName),
-		KubeletConfigPath:            normalizeConfigPath(kubeletConfigPath),
-		AnonymousAuthEnabled:         cloneBoolPointer(config.Authentication.Anonymous.Enabled),
-		WebhookAuthenticationEnabled: cloneBoolPointer(config.Authentication.Webhook.Enabled),
-		AuthorizationMode:            strings.TrimSpace(config.Authorization.Mode),
+		NodeName:                       strings.TrimSpace(nodeName),
+		KubeletConfigPath:              normalizeConfigPath(kubeletConfigPath),
+		AnonymousAuthEnabled:           cloneBoolPointer(config.Authentication.Anonymous.Enabled),
+		WebhookAuthenticationEnabled:   cloneBoolPointer(config.Authentication.Webhook.Enabled),
+		AuthorizationMode:              strings.TrimSpace(config.Authorization.Mode),
 		AuthenticationX509ClientCAFile: strings.TrimSpace(config.Authentication.X509.ClientCAFile),
-		ReadOnlyPort:                 cloneInt32Pointer(config.ReadOnlyPort),
-		ProtectKernelDefaults:        cloneBoolPointer(config.ProtectKernelDefaults),
-		FailSwapOn:                   cloneBoolPointer(config.FailSwapOn),
-		RotateCertificates:           cloneBoolPointer(config.RotateCertificates),
-		ServerTLSBootstrap:           cloneBoolPointer(config.ServerTLSBootstrap),
-		SeccompDefault:               cloneBoolPointer(config.SeccompDefault),
+		ReadOnlyPort:                   cloneInt32Pointer(config.ReadOnlyPort),
+		ProtectKernelDefaults:          cloneBoolPointer(config.ProtectKernelDefaults),
+		FailSwapOn:                     cloneBoolPointer(config.FailSwapOn),
+		RotateCertificates:             cloneBoolPointer(config.RotateCertificates),
+		ServerTLSBootstrap:             cloneBoolPointer(config.ServerTLSBootstrap),
+		SeccompDefault:                 cloneBoolPointer(config.SeccompDefault),
 	}, nil
 }
 
@@ -93,18 +93,18 @@ func BuildNodeReport(observations KubeletObservations, now time.Time) v1alpha1.N
 			},
 		},
 		Spec: v1alpha1.NodeReportSpec{
-			NodeName:                     observations.NodeName,
-			KubeletConfigPath:            observations.KubeletConfigPath,
-			AnonymousAuthEnabled:         cloneBoolPointer(observations.AnonymousAuthEnabled),
-			WebhookAuthenticationEnabled: cloneBoolPointer(observations.WebhookAuthenticationEnabled),
-			AuthorizationMode:            observations.AuthorizationMode,
+			NodeName:                       observations.NodeName,
+			KubeletConfigPath:              observations.KubeletConfigPath,
+			AnonymousAuthEnabled:           cloneBoolPointer(observations.AnonymousAuthEnabled),
+			WebhookAuthenticationEnabled:   cloneBoolPointer(observations.WebhookAuthenticationEnabled),
+			AuthorizationMode:              observations.AuthorizationMode,
 			AuthenticationX509ClientCAFile: observations.AuthenticationX509ClientCAFile,
-			ReadOnlyPort:                 cloneInt32Pointer(observations.ReadOnlyPort),
-			ProtectKernelDefaults:        cloneBoolPointer(observations.ProtectKernelDefaults),
-			FailSwapOn:                   cloneBoolPointer(observations.FailSwapOn),
-			RotateCertificates:           cloneBoolPointer(observations.RotateCertificates),
-			ServerTLSBootstrap:           cloneBoolPointer(observations.ServerTLSBootstrap),
-			SeccompDefault:               cloneBoolPointer(observations.SeccompDefault),
+			ReadOnlyPort:                   cloneInt32Pointer(observations.ReadOnlyPort),
+			ProtectKernelDefaults:          cloneBoolPointer(observations.ProtectKernelDefaults),
+			FailSwapOn:                     cloneBoolPointer(observations.FailSwapOn),
+			RotateCertificates:             cloneBoolPointer(observations.RotateCertificates),
+			ServerTLSBootstrap:             cloneBoolPointer(observations.ServerTLSBootstrap),
+			SeccompDefault:                 cloneBoolPointer(observations.SeccompDefault),
 		},
 		Status: v1alpha1.NodeReportStatus{
 			Phase:       "Ready",

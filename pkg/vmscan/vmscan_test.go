@@ -24,7 +24,7 @@ func TestResolveTargetFromRootFS(t *testing.T) {
 func TestResolveTargetFromTarArchive(t *testing.T) {
 	archivePath := filepath.Join(t.TempDir(), "vm-rootfs.tar.gz")
 	if err := writeTarGz(archivePath, map[string]string{
-		"etc/os-release": "NAME=test\n",
+		"etc/os-release":      "NAME=test\n",
 		"var/lib/dpkg/status": "Package: libc6\nStatus: install ok installed\nVersion: 2.36-1\n\n",
 	}); err != nil {
 		t.Fatalf("writeTarGz returned error: %v", err)

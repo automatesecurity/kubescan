@@ -717,7 +717,7 @@ func parseCargoLock(content []byte) []vuln.Package {
 
 func parseComposerLock(content []byte) []vuln.Package {
 	var payload struct {
-		Packages    []struct {
+		Packages []struct {
 			Name    string `json:"name"`
 			Version string `json:"version"`
 		} `json:"packages"`

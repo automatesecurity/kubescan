@@ -132,12 +132,12 @@ type ScanReportStatus struct {
 }
 
 type NotificationStatus struct {
-	LastAttemptAt          *metav1.Time `json:"lastAttemptAt,omitempty"`
-	EventEmitted           bool         `json:"eventEmitted,omitempty"`
-	WebhookDelivered       bool         `json:"webhookDelivered,omitempty"`
-	SlackDelivered         bool         `json:"slackDelivered,omitempty"`
-	HistoryWebhookDelivered bool        `json:"historyWebhookDelivered,omitempty"`
-	LastError              string       `json:"lastError,omitempty"`
+	LastAttemptAt           *metav1.Time `json:"lastAttemptAt,omitempty"`
+	EventEmitted            bool         `json:"eventEmitted,omitempty"`
+	WebhookDelivered        bool         `json:"webhookDelivered,omitempty"`
+	SlackDelivered          bool         `json:"slackDelivered,omitempty"`
+	HistoryWebhookDelivered bool         `json:"historyWebhookDelivered,omitempty"`
+	LastError               string       `json:"lastError,omitempty"`
 }
 
 type ScanReportTrend struct {
@@ -214,18 +214,18 @@ type NodeReport struct {
 }
 
 type NodeReportSpec struct {
-	NodeName                     string `json:"nodeName,omitempty"`
-	KubeletConfigPath            string `json:"kubeletConfigPath,omitempty"`
-	AnonymousAuthEnabled         *bool  `json:"anonymousAuthEnabled,omitempty"`
-	WebhookAuthenticationEnabled *bool  `json:"webhookAuthenticationEnabled,omitempty"`
-	AuthorizationMode            string `json:"authorizationMode,omitempty"`
+	NodeName                       string `json:"nodeName,omitempty"`
+	KubeletConfigPath              string `json:"kubeletConfigPath,omitempty"`
+	AnonymousAuthEnabled           *bool  `json:"anonymousAuthEnabled,omitempty"`
+	WebhookAuthenticationEnabled   *bool  `json:"webhookAuthenticationEnabled,omitempty"`
+	AuthorizationMode              string `json:"authorizationMode,omitempty"`
 	AuthenticationX509ClientCAFile string `json:"authenticationX509ClientCAFile,omitempty"`
-	ReadOnlyPort                 *int32 `json:"readOnlyPort,omitempty"`
-	ProtectKernelDefaults        *bool  `json:"protectKernelDefaults,omitempty"`
-	FailSwapOn                   *bool  `json:"failSwapOn,omitempty"`
-	RotateCertificates           *bool  `json:"rotateCertificates,omitempty"`
-	ServerTLSBootstrap           *bool  `json:"serverTLSBootstrap,omitempty"`
-	SeccompDefault               *bool  `json:"seccompDefault,omitempty"`
+	ReadOnlyPort                   *int32 `json:"readOnlyPort,omitempty"`
+	ProtectKernelDefaults          *bool  `json:"protectKernelDefaults,omitempty"`
+	FailSwapOn                     *bool  `json:"failSwapOn,omitempty"`
+	RotateCertificates             *bool  `json:"rotateCertificates,omitempty"`
+	ServerTLSBootstrap             *bool  `json:"serverTLSBootstrap,omitempty"`
+	SeccompDefault                 *bool  `json:"seccompDefault,omitempty"`
 }
 
 type NodeReportStatus struct {

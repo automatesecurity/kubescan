@@ -246,4 +246,3 @@ rules:
 		t.Fatalf("expected schema validation error")
 	}
 }
-

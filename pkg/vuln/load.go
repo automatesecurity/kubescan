@@ -32,8 +32,8 @@ type spdxBOM struct {
 	SPDXVersion string `json:"spdxVersion"`
 	Name        string `json:"name"`
 	Packages    []struct {
-		Name        string `json:"name"`
-		VersionInfo string `json:"versionInfo"`
+		Name         string `json:"name"`
+		VersionInfo  string `json:"versionInfo"`
 		ExternalRefs []struct {
 			ReferenceType    string `json:"referenceType"`
 			ReferenceLocator string `json:"referenceLocator"`

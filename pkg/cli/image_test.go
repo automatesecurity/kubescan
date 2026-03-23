@@ -416,8 +416,8 @@ func TestRunImageWritesSPDXSBOM(t *testing.T) {
 			_, err := io.WriteString(w, "spdx-json")
 			return err
 		},
-		loadSBOM: func(string) (vuln.SBOM, error) { return vuln.SBOM{}, nil },
-		loadAdvisories: func(string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
+		loadSBOM:           func(string) (vuln.SBOM, error) { return vuln.SBOM{}, nil },
+		loadAdvisories:     func(string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
 		loadAdvisoryBundle: func(string, string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
 		openOutput: func(path string) (io.WriteCloser, error) {
 			if path != "generated.spdx.json" {

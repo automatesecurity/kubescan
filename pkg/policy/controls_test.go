@@ -176,4 +176,3 @@ suppressions:
 		t.Fatalf("expected schema validation error")
 	}
 }
-

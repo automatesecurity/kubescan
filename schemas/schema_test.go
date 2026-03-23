@@ -115,4 +115,3 @@ func stringValue(value any) string {
 	typed, _ := value.(string)
 	return typed
 }
-

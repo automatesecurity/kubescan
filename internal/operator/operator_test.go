@@ -1888,4 +1888,3 @@ func x509MarshalPublicKeyPEM(publicKey ed25519.PublicKey) ([]byte, error) {
 	block := pem.Block{Type: "PUBLIC KEY", Bytes: der}
 	return pem.EncodeToMemory(&block), nil
 }
-

@@ -1457,4 +1457,3 @@ func indentBlock(value, prefix string) string {
 	}
 	return strings.Join(lines, "\n")
 }
-

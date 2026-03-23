@@ -72,32 +72,32 @@ type Workload struct {
 }
 
 type Node struct {
-	Resource                            ResourceRef
-	Labels                              map[string]string
-	Unschedulable                       bool
-	Taints                              []Taint
-	ExternalIPs                         []string
-	ContainerRuntime                    string
-	KernelVersion                       string
-	OSImage                             string
-	KubeletVersion                      string
-	KubeProxyVersion                    string
-	Ready                               bool
-	MemoryPressure                      bool
-	DiskPressure                        bool
-	PIDPressure                         bool
-	NetworkUnavailable                  bool
-	KubeletConfigPath                   string
-	KubeletAnonymousAuthEnabled         *bool
-	KubeletWebhookAuthenticationEnabled *bool
-	KubeletAuthorizationMode            string
+	Resource                              ResourceRef
+	Labels                                map[string]string
+	Unschedulable                         bool
+	Taints                                []Taint
+	ExternalIPs                           []string
+	ContainerRuntime                      string
+	KernelVersion                         string
+	OSImage                               string
+	KubeletVersion                        string
+	KubeProxyVersion                      string
+	Ready                                 bool
+	MemoryPressure                        bool
+	DiskPressure                          bool
+	PIDPressure                           bool
+	NetworkUnavailable                    bool
+	KubeletConfigPath                     string
+	KubeletAnonymousAuthEnabled           *bool
+	KubeletWebhookAuthenticationEnabled   *bool
+	KubeletAuthorizationMode              string
 	KubeletAuthenticationX509ClientCAFile string
-	KubeletReadOnlyPort                 *int32
-	KubeletProtectKernelDefaults        *bool
-	KubeletFailSwapOn                   *bool
-	KubeletRotateCertificates           *bool
-	KubeletServerTLSBootstrap           *bool
-	KubeletSeccompDefault               *bool
+	KubeletReadOnlyPort                   *int32
+	KubeletProtectKernelDefaults          *bool
+	KubeletFailSwapOn                     *bool
+	KubeletRotateCertificates             *bool
+	KubeletServerTLSBootstrap             *bool
+	KubeletSeccompDefault                 *bool
 }
 
 type Container struct {

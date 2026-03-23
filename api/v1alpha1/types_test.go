@@ -123,4 +123,3 @@ func assertStoredVersion(t *testing.T, manifest crdManifest, version string) {
 		t.Fatalf("expected version %q to be storage", version)
 	}
 }
-

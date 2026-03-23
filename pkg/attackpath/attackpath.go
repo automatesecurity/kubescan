@@ -9,20 +9,20 @@ import (
 )
 
 const (
-	internetNodeID      = "synthetic:internet"
-	nodeCompromiseID    = "synthetic:node-compromise"
-	secretAccessID      = "synthetic:secret-access"
-	wildcardAccessID    = "synthetic:wildcard-rbac"
-	clusterAdminID      = "synthetic:cluster-admin"
-	controlPlaneNodeID  = "synthetic:control-plane"
-	relationRoutesTo    = "ROUTES_TO"
-	relationUsesSA      = "USES_SERVICE_ACCOUNT"
-	relationBoundTo     = "BOUND_TO_ROLE"
-	relationCanReach    = "CAN_REACH"
-	relationCanRead     = "CAN_READ"
-	relationGrants      = "GRANTS"
-	relationTargets     = "TARGETS"
-	relationPrecond     = "HAS_PRECONDITIONS_FOR"
+	internetNodeID     = "synthetic:internet"
+	nodeCompromiseID   = "synthetic:node-compromise"
+	secretAccessID     = "synthetic:secret-access"
+	wildcardAccessID   = "synthetic:wildcard-rbac"
+	clusterAdminID     = "synthetic:cluster-admin"
+	controlPlaneNodeID = "synthetic:control-plane"
+	relationRoutesTo   = "ROUTES_TO"
+	relationUsesSA     = "USES_SERVICE_ACCOUNT"
+	relationBoundTo    = "BOUND_TO_ROLE"
+	relationCanReach   = "CAN_REACH"
+	relationCanRead    = "CAN_READ"
+	relationGrants     = "GRANTS"
+	relationTargets    = "TARGETS"
+	relationPrecond    = "HAS_PRECONDITIONS_FOR"
 )
 
 type Node struct {
@@ -51,16 +51,16 @@ type Step struct {
 }
 
 type Result struct {
-	ID              string            `json:"id"`
-	Title           string            `json:"title"`
-	Severity        policy.Severity   `json:"severity"`
-	Summary         string            `json:"summary"`
+	ID              string             `json:"id"`
+	Title           string             `json:"title"`
+	Severity        policy.Severity    `json:"severity"`
+	Summary         string             `json:"summary"`
 	Entry           policy.ResourceRef `json:"entry"`
-	Target          string            `json:"target"`
-	Path            string            `json:"path"`
-	SupportingRules []string          `json:"supportingRules,omitempty"`
-	Remediation     string            `json:"remediation"`
-	Steps           []Step            `json:"steps"`
+	Target          string             `json:"target"`
+	Path            string             `json:"path"`
+	SupportingRules []string           `json:"supportingRules,omitempty"`
+	Remediation     string             `json:"remediation"`
+	Steps           []Step             `json:"steps"`
 }
 
 func BuildGraph(inventory policy.Inventory) Graph {
