@@ -1,0 +1,22 @@
+apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+kind: AdvisoryBundle
+advisories:
+  - id: CVE-2026-0001
+    aliases:
+      - GHSA-demo-0001
+    packageName: openssl
+    ecosystem: apk
+    affectedVersions:
+      - ">=1.1.1-r0, <1.1.1-r2"
+    fixedVersion: 1.1.1-r1
+    severity: high
+    summary: OpenSSL package vulnerability in the base image
+  - id: CVE-2026-0002
+    packageName: busybox
+    ecosystem: apk
+    affectedVersions:
+      - "<1.36.0-r2"
+    fixedVersion: 1.36.0-r2
+    severity: medium
+    summary: Busybox package vulnerability in the worker image
+

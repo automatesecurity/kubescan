@@ -1,0 +1,32 @@
+apiVersion: security.automatesecurity.github.io/v1alpha1
+kind: ScanPolicy
+metadata:
+  name: cluster-bundles
+spec:
+  profile: hardening
+  compliance: k8s-cis
+  attackPaths: true
+  componentVulns: true
+  bundleFailurePolicy: use-last-good
+  bundleKeyRef:
+    kind: Secret
+    name: kubescan-bundle-key
+    namespace: kubescan-system
+    key: bundle.pub.pem
+  policyBundleRef:
+    kind: ConfigMap
+    name: kubescan-policy-bundle
+    namespace: kubescan-system
+    key: policy.bundle.yaml
+  rulesBundleRef:
+    kind: ConfigMap
+    name: kubescan-rules-bundle
+    namespace: kubescan-system
+    key: rules.bundle.yaml
+  advisoriesBundleRef:
+    kind: ConfigMap
+    name: kubescan-advisories-bundle
+    namespace: kubescan-system
+    key: advisories.bundle.yaml
+  sbomSelector: security.automatesecurity.github.io/sbom=true
+

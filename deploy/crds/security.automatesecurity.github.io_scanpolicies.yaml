@@ -1,0 +1,197 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: scanpolicies.security.automatesecurity.github.io
+spec:
+  group: security.automatesecurity.github.io
+  scope: Cluster
+  names:
+    plural: scanpolicies
+    singular: scanpolicy
+    kind: ScanPolicy
+    shortNames:
+      - kspol
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Profile
+          type: string
+          jsonPath: .spec.profile
+        - name: Compliance
+          type: string
+          jsonPath: .spec.compliance
+        - name: Namespace
+          type: string
+          jsonPath: .spec.namespace
+        - name: AttackPaths
+          type: boolean
+          jsonPath: .spec.attackPaths
+        - name: Suspended
+          type: boolean
+          jsonPath: .spec.suspend
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                profile:
+                  type: string
+                compliance:
+                  type: string
+                attackPaths:
+                  type: boolean
+                componentVulns:
+                  type: boolean
+                notification:
+                  type: object
+                  properties:
+                    emitEvents:
+                      type: boolean
+                    webhookUrl:
+                      type: string
+                    slackWebhookUrl:
+                      type: string
+                    minimumSeverity:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                sbomRefreshInterval:
+                  type: string
+                bundleFailurePolicy:
+                  type: string
+                suspend:
+                  type: boolean
+                includeKinds:
+                  type: array
+                  items:
+                    type: string
+                excludeKinds:
+                  type: array
+                  items:
+                    type: string
+                includeNamespaces:
+                  type: array
+                  items:
+                    type: string
+                excludeNamespaces:
+                  type: array
+                  items:
+                    type: string
+                bundleKeyRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                policyBundleRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                rulesBundleRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                advisoriesBundleRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                sbomRefs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                      key:
+                        type: string
+                      authSecretRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                          key:
+                            type: string
+                sbomSelector:
+                  type: string
+

@@ -1,0 +1,34 @@
+apiVersion: security.automatesecurity.github.io/v1alpha1
+kind: ScanPolicy
+metadata:
+  name: remote-sboms
+spec:
+  namespace: payments
+  profile: hardening
+  componentVulns: true
+  sbomRefreshInterval: 30m
+  bundleFailurePolicy: use-last-good
+  bundleKeyRef:
+    kind: Secret
+    name: kubescan-bundle-key
+    namespace: kubescan-system
+    key: bundle.pub.pem
+  advisoriesBundleRef:
+    kind: ConfigMap
+    name: kubescan-advisories-bundle
+    namespace: kubescan-system
+    key: advisories.bundle.yaml
+  sbomRefs:
+    - kind: OCIImage
+      name: registry.internal/acme/api:1.0.0
+      authSecretRef:
+        name: registry-creds
+        namespace: payments
+        key: creds.json
+    - kind: HTTP
+      name: https://sboms.example.com/worker.cdx.json
+      authSecretRef:
+        name: sbom-http-auth
+        namespace: payments
+        key: token
+

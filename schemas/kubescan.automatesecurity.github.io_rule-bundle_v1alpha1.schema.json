@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatesecurity.github.io/kubescan/schemas/kubescan.automatesecurity.github.io/rule-bundle/v1alpha1",
+  "title": "Kubescan Rule Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "kubescan.automatesecurity.github.io/v1alpha1"
+    },
+    "kind": {
+      "const": "RuleBundle"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ruleConfig"
+      }
+    },
+    "customRules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/customRule"
+      }
+    }
+  },
+  "$defs": {
+    "ruleConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "severity": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        }
+      }
+    },
+    "matchClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "all": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        },
+        "any": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        },
+        "not": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "all": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        },
+        "any": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        },
+        "not": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "field",
+            "op"
+          ]
+        },
+        {
+          "required": [
+            "all"
+          ]
+        },
+        {
+          "required": [
+            "any"
+          ]
+        },
+        {
+          "required": [
+            "not"
+          ]
+        }
+      ]
+    },
+    "customRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "target",
+        "category",
+        "title",
+        "severity",
+        "message",
+        "remediation",
+        "match"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target": {
+          "enum": [
+            "container",
+            "workload",
+            "service",
+            "namespace",
+            "serviceAccount"
+          ]
+        },
+        "category": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "remediation": {
+          "type": "string"
+        },
+        "match": {
+          "$ref": "#/$defs/matchClause"
+        }
+      }
+    }
+  }
+}
+

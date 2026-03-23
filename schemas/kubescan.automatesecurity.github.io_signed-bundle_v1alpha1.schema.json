@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatesecurity.github.io/kubescan/schemas/kubescan.automatesecurity.github.io/signed-bundle/v1alpha1",
+  "title": "Kubescan Signed Bundle Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "metadata",
+    "payload",
+    "signature"
+  ],
+  "properties": {
+    "apiVersion": {
+      "enum": [
+        "kubescan.automatesecurity.github.io/v1alpha1",
+        "kubescan.io/v1alpha1",
+        "security.kubescan.io/v1alpha1"
+      ]
+    },
+    "kind": {
+      "const": "SignedBundle"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "algorithm"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "policy-controls",
+            "rules",
+            "advisories"
+          ]
+        },
+        "algorithm": {
+          "const": "ed25519"
+        }
+      }
+    },
+    "payload": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    }
+  }
+}
+

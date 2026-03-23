@@ -1,0 +1,10 @@
+.git
+.github
+out.txt
+findings.sarif
+*.sbom.json
+*.sarif
+bin
+dist
+coverage.out
+**/*.test

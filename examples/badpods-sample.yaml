@@ -1,0 +1,74 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: research-demo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-shell
+  namespace: research-demo
+spec:
+  selector:
+    matchLabels:
+      app: node-shell
+  template:
+    metadata:
+      labels:
+        app: node-shell
+    spec:
+      nodeName: control-plane-1
+      serviceAccountName: node-admin
+      automountServiceAccountToken: false
+      hostNetwork: true
+      hostPID: true
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: kubelet
+          hostPath:
+            path: /var/lib/kubelet
+      containers:
+        - name: shell
+          image: registry.internal.example/research/node-shell@sha256:4444444444444444444444444444444444444444444444444444444444444444
+          securityContext:
+            privileged: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - test -d /host/kubelet
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - test -d /host/kubelet
+          volumeMounts:
+            - name: kubelet
+              mountPath: /host/kubelet
+              readOnly: true

@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatesecurity.github.io/kubescan/schemas/report.automatesecurity.github.io/scan-result/v1",
+  "title": "Kubescan Scan Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "schema",
+    "schemaVersion",
+    "generatedAt",
+    "summary",
+    "findings"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "report.automatesecurity.github.io/v1"
+    },
+    "kind": {
+      "const": "ScanResult"
+    },
+    "schema": {
+      "const": "kubescan-scan-result"
+    },
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "compliance": {
+      "type": "object"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "attackPaths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/attackPath"
+      }
+    }
+  },
+  "$defs": {
+    "summaryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "count"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "attackPathSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalBySeverity",
+        "totalPaths",
+        "byId"
+      ],
+      "properties": {
+        "totalBySeverity": {
+          "$ref": "#/$defs/severityTotals"
+        },
+        "totalPaths": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "byId": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/summaryEntry"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalBySeverity",
+        "totalFindings",
+        "byRule",
+        "byNamespace",
+        "byCategory",
+        "attackPaths"
+      ],
+      "properties": {
+        "totalBySeverity": {
+          "$ref": "#/$defs/severityTotals"
+        },
+        "totalFindings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "byRule": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/summaryEntry"
+          }
+        },
+        "byNamespace": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/summaryEntry"
+          }
+        },
+        "byCategory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/summaryEntry"
+          }
+        },
+        "attackPaths": {
+          "$ref": "#/$defs/attackPathSummary"
+        }
+      }
+    },
+    "severityTotals": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "resourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name"
+      ],
+      "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "ruleId",
+        "severity",
+        "resource",
+        "message"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ruleId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "originalSeverity": {
+          "type": "string"
+        },
+        "ruleVersion": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "message": {
+          "type": "string"
+        },
+        "remediation": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "object"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "attackPath": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "title",
+        "severity",
+        "entry",
+        "target",
+        "path"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "entry": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "target": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "supportingRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "remediation": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+

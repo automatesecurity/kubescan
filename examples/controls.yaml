@@ -1,0 +1,94 @@
+apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+kind: PolicyControls
+suppressions:
+  - id: suppress-api-hardening-noise
+    ruleId: KS003
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Temporary exception while the image is being rebuilt for non-root execution.
+  - id: suppress-api-filesystem
+    ruleId: KS005
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Temporary exception while the application write paths are migrated.
+  - id: suppress-api-requests
+    ruleId: KS006
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Capacity settings are being finalized.
+  - id: suppress-api-limits
+    ruleId: KS007
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Capacity settings are being finalized.
+  - id: suppress-api-liveness
+    ruleId: KS008
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Probe rollout is still in progress.
+  - id: suppress-api-readiness
+    ruleId: KS009
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Probe rollout is still in progress.
+  - id: suppress-public-service
+    ruleId: KS011
+    namespace: payments
+    kind: Service
+    name: api
+    expiresOn: 2026-12-31
+    reason: External exposure is currently required for the pilot.
+  - id: suppress-token-automount
+    ruleId: KS012
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: The workload still requires Kubernetes API access.
+  - id: suppress-allow-priv-escalation
+    ruleId: KS022
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: Temporary exception while the base image is being hardened.
+  - id: suppress-seccomp-gap
+    ruleId: KS023
+    namespace: payments
+    kind: Deployment
+    name: api
+    expiresOn: 2026-12-31
+    reason: RuntimeDefault seccomp rollout is still in progress.
+  - id: suppress-ingress-policy-gap
+    ruleId: KS030
+    namespace: payments
+    kind: Namespace
+    name: payments
+    expiresOn: 2026-12-31
+    reason: Ingress isolation baseline has not been applied yet.
+  - id: suppress-egress-policy-gap
+    ruleId: KS031
+    namespace: payments
+    kind: Namespace
+    name: payments
+    expiresOn: 2026-12-31
+    reason: Egress isolation baseline has not been applied yet.
+severityOverrides:
+  - ruleId: KS010
+    namespace: payments
+    kind: Deployment
+    name: api
+    severity: critical
+

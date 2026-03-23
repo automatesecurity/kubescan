@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubescan-operator
+  namespace: kubescan-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubescan-operator
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "clusterroles", "rolebindings", "clusterrolebindings"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["security.automatesecurity.github.io"]
+    resources: ["scanpolicies", "sbomreports", "nodereports"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["security.automatesecurity.github.io"]
+    resources: ["scanreports"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubescan-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubescan-operator
+subjects:
+  - kind: ServiceAccount
+    name: kubescan-operator
+    namespace: kubescan-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubescan-operator
+  namespace: kubescan-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubescan-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubescan-operator
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: kubescan-operator
+      containers:
+        - name: operator
+          image: ghcr.io/automatesecurity/kubescan-operator:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          args:
+            - --interval=15m
+            - --watch=true
+            - --watch-debounce=10s
+            - --cycle-timeout=5m
+            - --prune-stale-reports=true
+            - --report-ttl=24h
+            - --max-findings=250
+            - --max-attack-paths=100
+            - --profile=hardening
+

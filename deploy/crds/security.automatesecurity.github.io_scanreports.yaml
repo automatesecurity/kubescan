@@ -1,0 +1,362 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: scanreports.security.automatesecurity.github.io
+spec:
+  group: security.automatesecurity.github.io
+  scope: Cluster
+  names:
+    plural: scanreports
+    singular: scanreport
+    kind: ScanReport
+    shortNames:
+      - ksrep
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Findings
+          type: integer
+          jsonPath: .status.totalFindings
+        - name: Paths
+          type: integer
+          jsonPath: .status.totalAttackPaths
+        - name: Profile
+          type: string
+          jsonPath: .spec.profile
+        - name: Compliance
+          type: string
+          jsonPath: .spec.compliance
+        - name: Generated
+          type: date
+          jsonPath: .status.generatedAt
+        - name: Cached
+          type: boolean
+          jsonPath: .status.usedCachedSources
+        - name: Changed
+          type: boolean
+          jsonPath: .status.delta.hasChanges
+        - name: Runs
+          type: integer
+          jsonPath: .status.trend.totalRuns
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                policyName:
+                  type: string
+                namespace:
+                  type: string
+                profile:
+                  type: string
+                compliance:
+                  type: string
+                attackPaths:
+                  type: boolean
+                componentVulns:
+                  type: boolean
+                notification:
+                  type: object
+                  properties:
+                    emitEvents:
+                      type: boolean
+                    webhookUrl:
+                      type: string
+                    slackWebhookUrl:
+                      type: string
+                    minimumSeverity:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                sbomRefreshInterval:
+                  type: string
+                bundleFailurePolicy:
+                  type: string
+                includeKinds:
+                  type: array
+                  items:
+                    type: string
+                excludeKinds:
+                  type: array
+                  items:
+                    type: string
+                includeNamespaces:
+                  type: array
+                  items:
+                    type: string
+                excludeNamespaces:
+                  type: array
+                  items:
+                    type: string
+                bundleKeyRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                policyBundleRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                rulesBundleRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                advisoriesBundleRef:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                    authSecretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        key:
+                          type: string
+                sbomRefs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                      key:
+                        type: string
+                      authSecretRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                          key:
+                            type: string
+                sbomSelector:
+                  type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                generatedAt:
+                  type: string
+                  format: date-time
+                delta:
+                  type: object
+                  properties:
+                    hasChanges:
+                      type: boolean
+                    previousGeneratedAt:
+                      type: string
+                      format: date-time
+                    findingsAdded:
+                      type: integer
+                    findingsRemoved:
+                      type: integer
+                    findingsSeverityChanged:
+                      type: integer
+                    attackPathsAdded:
+                      type: integer
+                    attackPathsRemoved:
+                      type: integer
+                    resourcesChanged:
+                      type: integer
+                    resourcesTruncated:
+                      type: boolean
+                    resourceDeltas:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          kind:
+                            type: string
+                          namespace:
+                            type: string
+                          name:
+                            type: string
+                          findingsAdded:
+                            type: integer
+                          findingsRemoved:
+                            type: integer
+                          findingsSeverityChanged:
+                            type: integer
+                notification:
+                  type: object
+                  properties:
+                    lastAttemptAt:
+                      type: string
+                      format: date-time
+                    eventEmitted:
+                      type: boolean
+                    webhookDelivered:
+                      type: boolean
+                    slackDelivered:
+                      type: boolean
+                    lastError:
+                      type: string
+                trend:
+                  type: object
+                  properties:
+                    totalRuns:
+                      type: integer
+                    windowSize:
+                      type: integer
+                    highestRecentSeverity:
+                      type: string
+                    consecutiveCleanRuns:
+                      type: integer
+                    consecutiveErrorRuns:
+                      type: integer
+                    findingsDeltaFromLatest:
+                      type: integer
+                    attackPathsDeltaLatest:
+                      type: integer
+                    recentRuns:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          generatedAt:
+                            type: string
+                            format: date-time
+                          phase:
+                            type: string
+                          usedCachedSources:
+                            type: boolean
+                          totalFindings:
+                            type: integer
+                          totalAttackPaths:
+                            type: integer
+                          criticalFindings:
+                            type: integer
+                          highFindings:
+                            type: integer
+                          mediumFindings:
+                            type: integer
+                          lowFindings:
+                            type: integer
+                lastError:
+                  type: string
+                usedCachedSources:
+                  type: boolean
+                storedFindings:
+                  type: integer
+                storedAttackPaths:
+                  type: integer
+                totalFindings:
+                  type: integer
+                totalAttackPaths:
+                  type: integer
+                findingsTruncated:
+                  type: boolean
+                attackPathsTruncated:
+                  type: boolean
+                sourceStatuses:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                      key:
+                        type: string
+                      digest:
+                        type: string
+                      phase:
+                        type: string
+                      cached:
+                        type: boolean
+                      changed:
+                        type: boolean
+                      verifiedAt:
+                        type: string
+                        format: date-time
+                      nextRefreshAt:
+                        type: string
+                        format: date-time
+                      lastError:
+                        type: string
+                      description:
+                        type: string
+                result:
+                  x-kubernetes-preserve-unknown-fields: true
+

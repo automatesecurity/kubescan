@@ -1,0 +1,136 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: rbac-demo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: wildcard-admin
+rules:
+  - verbs: ["*"]
+    apiGroups: [""]
+    resources: ["pods"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: wildcard-admin-binding
+  namespace: rbac-demo
+subjects:
+  - kind: ServiceAccount
+    name: builder
+    namespace: rbac-demo
+  - kind: User
+    name: alice@example.com
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: wildcard-admin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: build-api
+  namespace: rbac-demo
+spec:
+  selector:
+    matchLabels:
+      app: build-api
+  template:
+    metadata:
+      labels:
+        app: build-api
+    spec:
+      serviceAccountName: builder
+      automountServiceAccountToken: false
+      containers:
+        - name: api
+          image: registry.internal.example/rbac/build-api@sha256:2222222222222222222222222222222222222222222222222222222222222222
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secret-reader
+  namespace: rbac-demo
+rules:
+  - verbs: ["get", "list"]
+    apiGroups: [""]
+    resources: ["secrets"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secret-reader-binding
+  namespace: rbac-demo
+subjects:
+  - kind: ServiceAccount
+    name: secret-bot
+    namespace: rbac-demo
+  - kind: User
+    name: bob@example.com
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: secret-reader
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secret-sync
+  namespace: rbac-demo
+spec:
+  selector:
+    matchLabels:
+      app: secret-sync
+  template:
+    metadata:
+      labels:
+        app: secret-sync
+    spec:
+      serviceAccountName: secret-bot
+      automountServiceAccountToken: false
+      containers:
+        - name: worker
+          image: registry.internal.example/rbac/secret-sync@sha256:3333333333333333333333333333333333333333333333333333333333333333
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: deployer-cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: deployer
+    namespace: rbac-demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin

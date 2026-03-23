@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubescan-node-collector
+  namespace: kubescan-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubescan-node-collector
+rules:
+  - apiGroups: ["security.automatesecurity.github.io"]
+    resources: ["nodereports"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubescan-node-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubescan-node-collector
+subjects:
+  - kind: ServiceAccount
+    name: kubescan-node-collector
+    namespace: kubescan-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kubescan-node-collector
+  namespace: kubescan-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubescan-node-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubescan-node-collector
+    spec:
+      serviceAccountName: kubescan-node-collector
+      automountServiceAccountToken: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: node-collector
+          image: ghcr.io/automatesecurity/kubescan-node-collector:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --interval=15m
+            - --host-root=/host
+            - --kubelet-config=/var/lib/kubelet/config.yaml
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            runAsUser: 0
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: host-kubelet
+              mountPath: /host/var/lib/kubelet
+              readOnly: true
+      volumes:
+        - name: host-kubelet
+          hostPath:
+            path: /var/lib/kubelet
+            type: Directory
+

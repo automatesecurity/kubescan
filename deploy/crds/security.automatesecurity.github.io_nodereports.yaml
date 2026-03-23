@@ -1,0 +1,72 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: nodereports.security.automatesecurity.github.io
+spec:
+  group: security.automatesecurity.github.io
+  scope: Cluster
+  names:
+    plural: nodereports
+    singular: nodereport
+    kind: NodeReport
+    shortNames:
+      - ksnode
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Node
+          type: string
+          jsonPath: .spec.nodeName
+        - name: AuthZ
+          type: string
+          jsonPath: .spec.authorizationMode
+        - name: RO Port
+          type: integer
+          jsonPath: .spec.readOnlyPort
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Generated
+          type: date
+          jsonPath: .status.generatedAt
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                nodeName:
+                  type: string
+                kubeletConfigPath:
+                  type: string
+                anonymousAuthEnabled:
+                  type: boolean
+                webhookAuthenticationEnabled:
+                  type: boolean
+                authorizationMode:
+                  type: string
+                readOnlyPort:
+                  type: integer
+                  format: int32
+                protectKernelDefaults:
+                  type: boolean
+                rotateCertificates:
+                  type: boolean
+                serverTLSBootstrap:
+                  type: boolean
+                seccompDefault:
+                  type: boolean
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                generatedAt:
+                  type: string
+                  format: date-time
+                lastError:
+                  type: string
+

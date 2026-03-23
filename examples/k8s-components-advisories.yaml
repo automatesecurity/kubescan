@@ -1,0 +1,20 @@
+apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+kind: AdvisoryBundle
+advisories:
+  - id: CVE-2026-2001
+    packageName: kubelet
+    ecosystem: kubernetes
+    affectedVersions:
+      - ">=v1.31.0, <v1.31.3"
+    fixedVersion: v1.31.3
+    severity: high
+    summary: Example kubelet vulnerability for live component scanning
+  - id: CVE-2026-2002
+    packageName: kube-apiserver
+    ecosystem: kubernetes
+    affectedVersions:
+      - "<=v1.31.1"
+    fixedVersion: v1.31.2
+    severity: critical
+    summary: Example API server vulnerability for live component scanning
+

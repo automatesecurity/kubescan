@@ -1,0 +1,25 @@
+apiVersion: security.automatesecurity.github.io/v1alpha1
+kind: ScanPolicy
+metadata:
+  name: github-sbom-sync
+spec:
+  namespace: payments
+  profile: hardening
+  sbomRefreshInterval: 30m
+  bundleFailurePolicy: use-last-good
+  advisoriesBundleRef:
+    kind: ConfigMap
+    name: advisories-bundle
+    key: advisories.bundle.yaml
+  bundleKeyRef:
+    kind: ConfigMap
+    name: bundle-key
+    key: bundle.pub.pem
+  sbomRefs:
+    - kind: GitHubReleaseAsset
+      name: automatesecurity/kubescan@v1.0.0
+      key: kubescan.sbom.json
+      authSecretRef:
+        name: github-token
+        key: token
+

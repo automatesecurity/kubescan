@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatesecurity.github.io/kubescan/schemas/kubescan.automatesecurity.github.io/policy-controls/v1alpha1",
+  "title": "Kubescan Policy Controls",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "kubescan.automatesecurity.github.io/v1alpha1"
+    },
+    "kind": {
+      "const": "PolicyControls"
+    },
+    "suppressions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/suppression"
+      }
+    },
+    "severityOverrides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/severityOverride"
+      }
+    }
+  },
+  "$defs": {
+    "suppression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ruleId": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "expiresOn": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "severityOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId",
+        "severity"
+      ],
+      "properties": {
+        "ruleId": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        }
+      }
+    }
+  }
+}
+

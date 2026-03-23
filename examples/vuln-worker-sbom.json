@@ -1,0 +1,18 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "metadata": {
+    "component": {
+      "type": "container",
+      "name": "ghcr.io/acme/worker:2.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "busybox",
+      "version": "1.36.0-r0",
+      "purl": "pkg:apk/alpine/busybox@1.36.0-r0"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hardening-demo
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: hardening-demo
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: true
+      volumes:
+        - name: app-secret
+          secret:
+            secretName: api-creds
+      containers:
+        - name: api
+          image: registry.internal.example/payments/api@sha256:1111111111111111111111111111111111111111111111111111111111111111
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: api-creds
+                  key: password
+          volumeMounts:
+            - name: app-secret
+              mountPath: /var/run/secrets/app

@@ -1,0 +1,18 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "metadata": {
+    "component": {
+      "type": "container",
+      "name": "ghcr.io/acme/api:1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "openssl",
+      "version": "1.1.1-r0",
+      "purl": "pkg:apk/alpine/openssl@1.1.1-r0"
+    }
+  ]
+}

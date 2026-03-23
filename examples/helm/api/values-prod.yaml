@@ -1,0 +1,19 @@
+namespace: helm-prod
+image:
+  repository: nginx
+  tag: "1.27.1"
+service:
+  type: ClusterIP
+securityContext:
+  enabled: true
+  automountServiceAccountToken: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  seccompProfile:
+    type: RuntimeDefault
+resources:
+  enabled: false
+probes:
+  enabled: false

@@ -1,0 +1,27 @@
+apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+kind: SignedBundle
+metadata:
+  algorithm: ed25519
+  type: rules
+payload: |-
+  apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+  kind: RuleBundle
+  rules:
+    - id: KS003
+      enabled: false
+    - id: KS010
+      severity: critical
+  customRules:
+    - id: CR001
+      target: container
+      category: supply-chain
+      title: Example signed bundle rule
+      severity: high
+      message: Container image matches the signed example bundle rule.
+      remediation: Replace the demo rule with an organization-specific bundle policy.
+      match:
+        all:
+          - field: image
+            op: contains
+            value: nginx
+signature: rwT5K87hi0iK2ZOnPRlTbryH3E2mmFl/oFxoxo2hJ2QDi6YJWdu9QSKpYLl1s5ItJuw/9Ww16T/1T2B3i8iwCg==

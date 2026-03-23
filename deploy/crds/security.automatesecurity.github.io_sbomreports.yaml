@@ -1,0 +1,54 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sbomreports.security.automatesecurity.github.io
+spec:
+  group: security.automatesecurity.github.io
+  scope: Namespaced
+  names:
+    plural: sbomreports
+    singular: sbomreport
+    kind: SBOMReport
+    shortNames:
+      - kssbom
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: .spec.imageRef
+        - name: Format
+          type: string
+          jsonPath: .spec.format
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Generated
+          type: date
+          jsonPath: .status.generatedAt
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                imageRef:
+                  type: string
+                format:
+                  type: string
+                content:
+                  type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                generatedAt:
+                  type: string
+                  format: date-time
+                lastError:
+                  type: string
+

@@ -1,0 +1,16 @@
+apiVersion: security.automatesecurity.github.io/v1alpha1
+kind: ScanPolicy
+metadata:
+  name: operator-notify-slack
+spec:
+  namespace: payments
+  profile: hardening
+  notification:
+    emitEvents: true
+    minimumSeverity: high
+    webhookUrl: https://hooks.example.internal/kubescan
+    slackWebhookUrl: https://hooks.slack.example.internal/services/T000/B000/XXXX
+    authSecretRef:
+      name: notification-auth
+      key: token
+

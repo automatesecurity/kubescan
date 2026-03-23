@@ -1,0 +1,15 @@
+apiVersion: security.automatesecurity.github.io/v1alpha1
+kind: ScanPolicy
+metadata:
+  name: cluster-notify
+spec:
+  profile: hardening
+  compliance: k8s-cis
+  attackPaths: true
+  notification:
+    emitEvents: true
+    webhookUrl: https://kubescan-webhook.example.internal/ingest
+    authSecretRef:
+      name: webhook-auth
+      key: token
+

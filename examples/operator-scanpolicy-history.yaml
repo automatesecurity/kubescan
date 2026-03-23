@@ -1,0 +1,14 @@
+apiVersion: security.automatesecurity.github.io/v1alpha1
+kind: ScanPolicy
+metadata:
+  name: operator-history-export
+spec:
+  namespace: payments
+  profile: hardening
+  attackPaths: true
+  notification:
+    historyWebhookUrl: https://history.example.internal/kubescan/reports
+    authSecretRef:
+      name: history-webhook-auth
+      key: token
+

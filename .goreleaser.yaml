@@ -1,0 +1,79 @@
+version: 2
+
+project_name: kubescan
+
+before:
+  hooks:
+    - go test ./...
+
+builds:
+  - id: kubescan
+    binary: kubescan
+    main: ./cmd/kubescan
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X kubescan/internal/buildinfo.Version={{ .Version }}
+      - -X kubescan/internal/buildinfo.Commit={{ .Commit }}
+      - -X kubescan/internal/buildinfo.Date={{ .Date }}
+  - id: kubescan-operator
+    binary: kubescan-operator
+    main: ./cmd/kubescan-operator
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X kubescan/internal/buildinfo.Version={{ .Version }}
+      - -X kubescan/internal/buildinfo.Commit={{ .Commit }}
+      - -X kubescan/internal/buildinfo.Date={{ .Date }}
+  - id: kubescan-node-collector
+    binary: kubescan-node-collector
+    main: ./cmd/kubescan-node-collector
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X kubescan/internal/buildinfo.Version={{ .Version }}
+      - -X kubescan/internal/buildinfo.Commit={{ .Commit }}
+      - -X kubescan/internal/buildinfo.Date={{ .Date }}
+
+archives:
+  - id: binaries
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  draft: false
+  prerelease: auto
+
+changelog:
+  use: github-native
