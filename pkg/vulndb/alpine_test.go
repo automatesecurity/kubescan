@@ -30,14 +30,30 @@ func TestLoadAlpineSecDBBytesNormalizesPackages(t *testing.T) {
 	if len(bundle.Advisories) != 2 {
 		t.Fatalf("expected 2 advisories, got %d", len(bundle.Advisories))
 	}
-	if bundle.Advisories[0].Ecosystem != "apk" {
-		t.Fatalf("expected apk ecosystem, got %+v", bundle.Advisories[0])
+	byID := map[string]struct {
+		ecosystem string
+		affected  string
+		fixed     string
+	}{}
+	for _, advisory := range bundle.Advisories {
+		if len(advisory.AffectedVersions) == 0 {
+			t.Fatalf("expected affected versions for advisory %+v", advisory)
+		}
+		byID[advisory.ID] = struct {
+			ecosystem string
+			affected  string
+			fixed     string
+		}{
+			ecosystem: advisory.Ecosystem,
+			affected:  advisory.AffectedVersions[0],
+			fixed:     advisory.FixedVersion,
+		}
 	}
-	if bundle.Advisories[0].AffectedVersions[0] != "<3.0.15-r0" {
-		t.Fatalf("unexpected affected versions %+v", bundle.Advisories[0].AffectedVersions)
+	if got := byID["CVE-2026-0001"]; got.ecosystem != "apk" || got.affected != "<3.0.15-r0" || got.fixed != "3.0.15-r0" {
+		t.Fatalf("unexpected advisory for CVE-2026-0001: %+v", got)
 	}
-	if bundle.Advisories[0].FixedVersion != "3.0.15-r0" {
-		t.Fatalf("unexpected fixed version %+v", bundle.Advisories[0])
+	if got := byID["CVE-2026-0002"]; got.ecosystem != "apk" || got.affected != "<3.0.16-r0" || got.fixed != "3.0.16-r0" {
+		t.Fatalf("unexpected advisory for CVE-2026-0002: %+v", got)
 	}
 }
 
