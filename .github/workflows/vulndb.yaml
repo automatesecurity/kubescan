@@ -23,12 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     env:
       MANIFEST_PATH: ${{ inputs.manifest_path || './examples/vulndb-sources-public.yaml' }}
       RELEASE_TAG: ${{ inputs.release_tag || 'vulndb-latest' }}
       DB_PATH: dist/kubescan-vulndb.sqlite
       METADATA_PATH: dist/kubescan-vulndb.sqlite.metadata.json
-      SIGNATURE_PATH: dist/kubescan-vulndb.sqlite.sig
+      BUNDLE_PATH: dist/kubescan-vulndb.sqlite.sigstore.json
 
     steps:
       - name: Check out repository
@@ -39,32 +40,35 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Validate signing configuration
-        shell: bash
-        env:
-          KUBESCAN_DB_SIGNING_KEY: ${{ secrets.KUBESCAN_DB_SIGNING_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KUBESCAN_DB_SIGNING_KEY:-}" ]; then
-            echo "KUBESCAN_DB_SIGNING_KEY is required to publish signed vulnerability database artifacts."
-            exit 1
-          fi
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
 
       - name: Build vulnerability database
         shell: bash
-        env:
-          KUBESCAN_DB_SIGNING_KEY: ${{ secrets.KUBESCAN_DB_SIGNING_KEY }}
         run: |
           set -euo pipefail
           mkdir -p dist
-          printf '%s\n' "$KUBESCAN_DB_SIGNING_KEY" > dist/db-signing-key.pem
-          chmod 600 dist/db-signing-key.pem
           go run ./cmd/kubescan db build \
             --source-manifest "$MANIFEST_PATH" \
             --out "$DB_PATH" \
-            --metadata-out "$METADATA_PATH" \
-            --signature-out "$SIGNATURE_PATH" \
-            --signing-key dist/db-signing-key.pem
+            --metadata-out "$METADATA_PATH"
+
+      - name: Sign vulnerability database with Sigstore
+        shell: bash
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes --bundle "$BUNDLE_PATH" "$DB_PATH"
+
+      - name: Verify vulnerability database Sigstore bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cosign verify-blob \
+            --new-bundle-format \
+            --bundle "$BUNDLE_PATH" \
+            --certificate-identity-regexp 'https://github.com/.+/.+/.github/workflows/vulndb.yaml@.+' \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "$DB_PATH"
 
       - name: Generate release notes
         shell: bash
@@ -87,7 +91,7 @@ jobs:
               "Assets:",
               "- `kubescan-vulndb.sqlite`",
               "- `kubescan-vulndb.sqlite.metadata.json`",
-              "- `kubescan-vulndb.sqlite.sig`",
+              "- `kubescan-vulndb.sqlite.sigstore.json`",
           ])
           Path("dist/vulndb-release-notes.md").write_text(notes + "\n")
           PY
@@ -105,7 +109,7 @@ jobs:
           gh release upload "$RELEASE_TAG" \
             "$DB_PATH" \
             "$METADATA_PATH" \
-            "$SIGNATURE_PATH" \
+            "$BUNDLE_PATH" \
             --clobber
 
       - name: Upload vulnerability db artifacts
@@ -116,4 +120,4 @@ jobs:
           path: |
             ${{ env.DB_PATH }}
             ${{ env.METADATA_PATH }}
-            ${{ env.SIGNATURE_PATH }}
+            ${{ env.BUNDLE_PATH }}

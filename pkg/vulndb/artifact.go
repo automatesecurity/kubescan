@@ -16,9 +16,21 @@ import (
 	"time"
 
 	"kubescan/internal/signing"
+
+	sigstorebundle "github.com/sigstore/sigstore-go/pkg/bundle"
+	sigstoreroot "github.com/sigstore/sigstore-go/pkg/root"
+	sigstoretuf "github.com/sigstore/sigstore-go/pkg/tuf"
+	sigstoreverify "github.com/sigstore/sigstore-go/pkg/verify"
 )
 
 const ArtifactMetadataVersion = "1.0.0"
+
+const (
+	OfficialDBCertificateIdentityRegexp = `^https://github\.com/automatesecurity/kubescan/\.github/workflows/vulndb\.yaml@.*$`
+	OfficialDBCertificateOIDCIssuer     = "https://token.actions.githubusercontent.com"
+)
+
+var verifySigstoreBundleFunc = verifySigstoreBundle
 
 type ArtifactMetadata struct {
 	Schema             string    `json:"schema"`
@@ -33,13 +45,34 @@ type ArtifactMetadata struct {
 	DBSHA256           string    `json:"dbSha256"`
 }
 
+type SigstoreVerifyOptions struct {
+	BundlePath                  string
+	TrustedRootPath             string
+	TUFCachePath                string
+	TUFMirror                   string
+	CertificateIdentity         string
+	CertificateIdentityRegexp   string
+	CertificateOIDCIssuer       string
+	CertificateOIDCIssuerRegexp string
+}
+
+type VerifyOptions struct {
+	DBPath        string
+	MetadataPath  string
+	SignaturePath string
+	KeyPath       string
+	Sigstore      SigstoreVerifyOptions
+}
+
 type DownloadOptions struct {
 	DBURL        string
 	MetadataURL  string
 	SignatureURL string
 	KeyPath      string
+	BundleURL    string
 	OutPath      string
 	Client       *http.Client
+	Sigstore     SigstoreVerifyOptions
 }
 
 func BuildMetadata(dbPath string, info Info) (ArtifactMetadata, error) {
@@ -105,21 +138,27 @@ func WriteSignature(path, dbPath, privateKeyPath string) error {
 	return nil
 }
 
-func VerifyArtifact(dbPath, metadataPath, signaturePath, keyPath string) error {
-	if metadataPath != "" {
-		metadata, err := LoadMetadata(metadataPath)
+func VerifyArtifact(options VerifyOptions) error {
+	if options.MetadataPath != "" {
+		metadata, err := LoadMetadata(options.MetadataPath)
 		if err != nil {
 			return err
 		}
-		if err := verifyChecksum(dbPath, metadata.DBSHA256); err != nil {
+		if err := verifyChecksum(options.DBPath, metadata.DBSHA256); err != nil {
 			return err
 		}
 	}
-	if signaturePath != "" || keyPath != "" {
-		if signaturePath == "" || keyPath == "" {
+	if options.Sigstore.BundlePath != "" {
+		options.Sigstore = defaultedSigstoreVerifyOptions(options.Sigstore)
+		if err := verifySigstoreBundleFunc(options.DBPath, options.Sigstore); err != nil {
+			return err
+		}
+	}
+	if options.SignaturePath != "" || options.KeyPath != "" {
+		if options.SignaturePath == "" || options.KeyPath == "" {
 			return fmt.Errorf("both signature and key are required for signature verification")
 		}
-		if err := verifySignature(dbPath, signaturePath, keyPath); err != nil {
+		if err := verifySignature(options.DBPath, options.SignaturePath, options.KeyPath); err != nil {
 			return err
 		}
 	}
@@ -161,10 +200,104 @@ func Download(options DownloadOptions) error {
 		}
 	}
 
-	if err := VerifyArtifact(options.OutPath, metadataPath, signaturePath, options.KeyPath); err != nil {
+	bundlePath := ""
+	if options.BundleURL != "" {
+		bundlePath = options.OutPath + ".sigstore.json"
+		if err := downloadFile(client, options.BundleURL, bundlePath); err != nil {
+			return err
+		}
+	}
+
+	verifyOptions := VerifyOptions{
+		DBPath:        options.OutPath,
+		MetadataPath:  metadataPath,
+		SignaturePath: signaturePath,
+		KeyPath:       options.KeyPath,
+		Sigstore:      options.Sigstore,
+	}
+	verifyOptions.Sigstore.BundlePath = bundlePath
+
+	if err := VerifyArtifact(verifyOptions); err != nil {
 		return err
 	}
 	return nil
+}
+
+func verifySigstoreBundle(dbPath string, options SigstoreVerifyOptions) error {
+	if strings.TrimSpace(options.BundlePath) == "" {
+		return fmt.Errorf("sigstore bundle path is required")
+	}
+
+	var trustedRoot *sigstoreroot.TrustedRoot
+	var err error
+	if options.TrustedRootPath != "" {
+		trustedRoot, err = sigstoreroot.NewTrustedRootFromPath(options.TrustedRootPath)
+	} else {
+		tufOptions := sigstoretuf.DefaultOptions()
+		if options.TUFCachePath != "" {
+			tufOptions.CachePath = options.TUFCachePath
+		}
+		if options.TUFMirror != "" {
+			tufOptions.RepositoryBaseURL = options.TUFMirror
+		}
+		trustedRoot, err = sigstoreroot.FetchTrustedRootWithOptions(tufOptions)
+	}
+	if err != nil {
+		return fmt.Errorf("load sigstore trusted root: %w", err)
+	}
+
+	entity, err := sigstorebundle.LoadJSONFromPath(options.BundlePath)
+	if err != nil {
+		return fmt.Errorf("load sigstore bundle: %w", err)
+	}
+
+	verifier, err := sigstoreverify.NewVerifier(
+		trustedRoot,
+		sigstoreverify.WithSignedCertificateTimestamps(1),
+		sigstoreverify.WithObserverTimestamps(1),
+		sigstoreverify.WithTransparencyLog(1),
+	)
+	if err != nil {
+		return fmt.Errorf("create sigstore verifier: %w", err)
+	}
+
+	identity, err := sigstoreverify.NewShortCertificateIdentity(
+		options.CertificateOIDCIssuer,
+		options.CertificateOIDCIssuerRegexp,
+		options.CertificateIdentity,
+		options.CertificateIdentityRegexp,
+	)
+	if err != nil {
+		return fmt.Errorf("build sigstore identity policy: %w", err)
+	}
+
+	file, err := os.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("open db for sigstore verification: %w", err)
+	}
+	defer file.Close()
+
+	if _, err := verifier.Verify(
+		entity,
+		sigstoreverify.NewPolicy(
+			sigstoreverify.WithArtifact(file),
+			sigstoreverify.WithCertificateIdentity(identity),
+		),
+	); err != nil {
+		return fmt.Errorf("verify sigstore bundle: %w", err)
+	}
+
+	return nil
+}
+
+func defaultedSigstoreVerifyOptions(options SigstoreVerifyOptions) SigstoreVerifyOptions {
+	if options.CertificateIdentity == "" && options.CertificateIdentityRegexp == "" {
+		options.CertificateIdentityRegexp = OfficialDBCertificateIdentityRegexp
+	}
+	if options.CertificateOIDCIssuer == "" && options.CertificateOIDCIssuerRegexp == "" {
+		options.CertificateOIDCIssuer = OfficialDBCertificateOIDCIssuer
+	}
+	return options
 }
 
 func verifySignature(dbPath, signaturePath, keyPath string) error {

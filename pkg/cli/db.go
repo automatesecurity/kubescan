@@ -26,8 +26,7 @@ type dbDeps struct {
 	inspectDB          func(string) (vulndb.Info, error)
 	buildMetadata      func(string, vulndb.Info) (vulndb.ArtifactMetadata, error)
 	writeMetadata      func(string, vulndb.ArtifactMetadata) error
-	writeSignature     func(string, string, string) error
-	verifyArtifact     func(string, string, string, string) error
+	verifyArtifact     func(vulndb.VerifyOptions) error
 	downloadDB         func(vulndb.DownloadOptions) error
 }
 
@@ -46,7 +45,6 @@ func RunDB(args []string, stdout, stderr io.Writer) int {
 		inspectDB:          vulndb.Inspect,
 		buildMetadata:      vulndb.BuildMetadata,
 		writeMetadata:      vulndb.WriteMetadata,
-		writeSignature:     vulndb.WriteSignature,
 		verifyArtifact:     vulndb.VerifyArtifact,
 		downloadDB:         vulndb.Download,
 	})
@@ -86,8 +84,6 @@ func runDBBuild(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 	var osvSources multiStringFlag
 	fs.Var(&osvSources, "osv", "path or URL for an OSV JSON source; repeat for multiple sources")
 	metadataOut := fs.String("metadata-out", "", "write artifact metadata JSON to this path")
-	signatureOut := fs.String("signature-out", "", "write detached base64 signature for the built db to this path")
-	signingKey := fs.String("signing-key", "", "path to an Ed25519 private key for detached db signing")
 
 	if err := fs.Parse(args); err != nil {
 		return 2
@@ -114,10 +110,6 @@ func runDBBuild(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 	}
 	if *bundleKeyFile != "" && *advisoriesBundleFile == "" {
 		fmt.Fprintln(stderr, "--bundle-key requires --advisories-bundle")
-		return 2
-	}
-	if (*signatureOut != "" || *signingKey != "") && (*signatureOut == "" || *signingKey == "") {
-		fmt.Fprintln(stderr, "--signature-out and --signing-key must be provided together")
 		return 2
 	}
 
@@ -193,12 +185,6 @@ func runDBBuild(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 			return 1
 		}
 	}
-	if *signatureOut != "" {
-		if err := deps.writeSignature(*signatureOut, *out, *signingKey); err != nil {
-			fmt.Fprintf(stderr, "write db signature: %v\n", err)
-			return 1
-		}
-	}
 	_, _ = fmt.Fprintf(stdout, "wrote vulnerability database to %s (%d advisories)\n", *out, len(advisories.Advisories))
 	return 0
 }
@@ -256,6 +242,14 @@ func runDBVerify(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 	metadataPath := fs.String("metadata", "", "path to artifact metadata JSON")
 	signaturePath := fs.String("signature", "", "path to detached base64 signature")
 	keyPath := fs.String("key", "", "path to an Ed25519 public key for db signature verification")
+	bundlePath := fs.String("bundle", "", "path to a Sigstore bundle for vulnerability db verification")
+	trustedRootPath := fs.String("trusted-root", "", "path to a Sigstore trusted_root.json override")
+	tufCachePath := fs.String("tuf-cache", "", "override path for the Sigstore TUF cache")
+	tufMirror := fs.String("tuf-mirror", "", "override Sigstore TUF mirror URL")
+	certificateIdentity := fs.String("certificate-identity", "", "expected signing certificate identity")
+	certificateIdentityRegexp := fs.String("certificate-identity-regexp", "", "expected signing certificate identity regex")
+	certificateOIDCIssuer := fs.String("certificate-oidc-issuer", "", "expected signing certificate OIDC issuer")
+	certificateOIDCIssuerRegexp := fs.String("certificate-oidc-issuer-regexp", "", "expected signing certificate OIDC issuer regex")
 
 	if err := fs.Parse(args); err != nil {
 		return 2
@@ -268,12 +262,27 @@ func runDBVerify(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 		fmt.Fprintln(stderr, "--signature and --key must be provided together")
 		return 2
 	}
-	if *metadataPath == "" && *signaturePath == "" {
-		fmt.Fprintln(stderr, "at least one of --metadata or --signature is required")
+	if *metadataPath == "" && *signaturePath == "" && *bundlePath == "" {
+		fmt.Fprintln(stderr, "at least one of --metadata, --signature, or --bundle is required")
 		return 2
 	}
 
-	if err := deps.verifyArtifact(*dbPath, *metadataPath, *signaturePath, *keyPath); err != nil {
+	if err := deps.verifyArtifact(vulndb.VerifyOptions{
+		DBPath:        *dbPath,
+		MetadataPath:  *metadataPath,
+		SignaturePath: *signaturePath,
+		KeyPath:       *keyPath,
+		Sigstore: vulndb.SigstoreVerifyOptions{
+			BundlePath:                  *bundlePath,
+			TrustedRootPath:             *trustedRootPath,
+			TUFCachePath:                *tufCachePath,
+			TUFMirror:                   *tufMirror,
+			CertificateIdentity:         *certificateIdentity,
+			CertificateIdentityRegexp:   *certificateIdentityRegexp,
+			CertificateOIDCIssuer:       *certificateOIDCIssuer,
+			CertificateOIDCIssuerRegexp: *certificateOIDCIssuerRegexp,
+		},
+	}); err != nil {
 		fmt.Fprintf(stderr, "verify advisory db: %v\n", err)
 		return 1
 	}
@@ -289,6 +298,14 @@ func runDBUpdate(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 	metadataURL := fs.String("metadata-url", "", "remote URL for artifact metadata JSON")
 	signatureURL := fs.String("signature-url", "", "remote URL for detached base64 signature")
 	keyPath := fs.String("key", "", "path to an Ed25519 public key for downloaded db signature verification")
+	bundleURL := fs.String("bundle-url", "", "remote URL for a Sigstore bundle JSON for the downloaded db")
+	trustedRootPath := fs.String("trusted-root", "", "path to a Sigstore trusted_root.json override")
+	tufCachePath := fs.String("tuf-cache", "", "override path for the Sigstore TUF cache")
+	tufMirror := fs.String("tuf-mirror", "", "override Sigstore TUF mirror URL")
+	certificateIdentity := fs.String("certificate-identity", "", "expected signing certificate identity")
+	certificateIdentityRegexp := fs.String("certificate-identity-regexp", "", "expected signing certificate identity regex")
+	certificateOIDCIssuer := fs.String("certificate-oidc-issuer", "", "expected signing certificate OIDC issuer")
+	certificateOIDCIssuerRegexp := fs.String("certificate-oidc-issuer-regexp", "", "expected signing certificate OIDC issuer regex")
 	out := fs.String("out", "", "output sqlite database path")
 
 	if err := fs.Parse(args); err != nil {
@@ -308,7 +325,17 @@ func runDBUpdate(args []string, stdout, stderr io.Writer, deps dbDeps) int {
 		MetadataURL:  *metadataURL,
 		SignatureURL: *signatureURL,
 		KeyPath:      *keyPath,
+		BundleURL:    *bundleURL,
 		OutPath:      *out,
+		Sigstore: vulndb.SigstoreVerifyOptions{
+			TrustedRootPath:             *trustedRootPath,
+			TUFCachePath:                *tufCachePath,
+			TUFMirror:                   *tufMirror,
+			CertificateIdentity:         *certificateIdentity,
+			CertificateIdentityRegexp:   *certificateIdentityRegexp,
+			CertificateOIDCIssuer:       *certificateOIDCIssuer,
+			CertificateOIDCIssuerRegexp: *certificateOIDCIssuerRegexp,
+		},
 	}); err != nil {
 		fmt.Fprintf(stderr, "update advisory db: %v\n", err)
 		return 1

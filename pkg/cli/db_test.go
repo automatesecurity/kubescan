@@ -84,11 +84,7 @@ func TestRunDBBuildWritesDatabase(t *testing.T) {
 			t.Fatalf("writeMetadata should not be called")
 			return nil
 		},
-		writeSignature: func(string, string, string) error {
-			t.Fatalf("writeSignature should not be called")
-			return nil
-		},
-		verifyArtifact: func(string, string, string, string) error {
+		verifyArtifact: func(vulndb.VerifyOptions) error {
 			t.Fatalf("verifyArtifact should not be called")
 			return nil
 		},
@@ -168,8 +164,7 @@ func TestRunDBBuildMergesOSVSources(t *testing.T) {
 		inspectDB:      func(string) (vulndb.Info, error) { return vulndb.Info{}, nil },
 		buildMetadata:  func(string, vulndb.Info) (vulndb.ArtifactMetadata, error) { return vulndb.ArtifactMetadata{}, nil },
 		writeMetadata:  func(string, vulndb.ArtifactMetadata) error { return nil },
-		writeSignature: func(string, string, string) error { return nil },
-		verifyArtifact: func(string, string, string, string) error { return nil },
+		verifyArtifact: func(vulndb.VerifyOptions) error { return nil },
 		downloadDB:     func(vulndb.DownloadOptions) error { return nil },
 	})
 	if exitCode != 0 {
@@ -222,8 +217,7 @@ func TestRunDBBuildUsesSourceManifest(t *testing.T) {
 		inspectDB:      func(string) (vulndb.Info, error) { return vulndb.Info{}, nil },
 		buildMetadata:  func(string, vulndb.Info) (vulndb.ArtifactMetadata, error) { return vulndb.ArtifactMetadata{}, nil },
 		writeMetadata:  func(string, vulndb.ArtifactMetadata) error { return nil },
-		writeSignature: func(string, string, string) error { return nil },
-		verifyArtifact: func(string, string, string, string) error { return nil },
+		verifyArtifact: func(vulndb.VerifyOptions) error { return nil },
 		downloadDB:     func(vulndb.DownloadOptions) error { return nil },
 	})
 	if exitCode != 0 {
@@ -269,11 +263,7 @@ func TestRunDBInfoWritesJSON(t *testing.T) {
 			t.Fatalf("writeMetadata should not be called")
 			return nil
 		},
-		writeSignature: func(string, string, string) error {
-			t.Fatalf("writeSignature should not be called")
-			return nil
-		},
-		verifyArtifact: func(string, string, string, string) error {
+		verifyArtifact: func(vulndb.VerifyOptions) error {
 			t.Fatalf("verifyArtifact should not be called")
 			return nil
 		},
@@ -298,7 +288,7 @@ func TestRunDBVerify(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	called := false
 
-	exitCode := runDB([]string{"verify", "--db", "advisories.db", "--metadata", "advisories.db.metadata.json", "--signature", "advisories.db.sig", "--key", "bundle.pub.pem"}, &stdout, &stderr, dbDeps{
+	exitCode := runDB([]string{"verify", "--db", "advisories.db", "--metadata", "advisories.db.metadata.json", "--bundle", "advisories.db.sigstore.json"}, &stdout, &stderr, dbDeps{
 		loadAdvisories:     func(string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
 		loadAdvisoryBundle: func(string, string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
 		loadOSVSource:      func(string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
@@ -310,15 +300,14 @@ func TestRunDBVerify(t *testing.T) {
 		resolveSources: func(context.Context, vulndb.SourceManifest, vulndb.SourceResolver) (vuln.AdvisoryBundle, error) {
 			return vuln.AdvisoryBundle{}, nil
 		},
-		writeDB:        func(string, vuln.AdvisoryBundle) error { return nil },
-		inspectDB:      func(string) (vulndb.Info, error) { return vulndb.Info{}, nil },
-		buildMetadata:  func(string, vulndb.Info) (vulndb.ArtifactMetadata, error) { return vulndb.ArtifactMetadata{}, nil },
-		writeMetadata:  func(string, vulndb.ArtifactMetadata) error { return nil },
-		writeSignature: func(string, string, string) error { return nil },
-		verifyArtifact: func(dbPath, metadataPath, signaturePath, keyPath string) error {
+		writeDB:       func(string, vuln.AdvisoryBundle) error { return nil },
+		inspectDB:     func(string) (vulndb.Info, error) { return vulndb.Info{}, nil },
+		buildMetadata: func(string, vulndb.Info) (vulndb.ArtifactMetadata, error) { return vulndb.ArtifactMetadata{}, nil },
+		writeMetadata: func(string, vulndb.ArtifactMetadata) error { return nil },
+		verifyArtifact: func(options vulndb.VerifyOptions) error {
 			called = true
-			if dbPath != "advisories.db" || metadataPath != "advisories.db.metadata.json" || signaturePath != "advisories.db.sig" || keyPath != "bundle.pub.pem" {
-				t.Fatalf("unexpected verify args %q %q %q %q", dbPath, metadataPath, signaturePath, keyPath)
+			if options.DBPath != "advisories.db" || options.MetadataPath != "advisories.db.metadata.json" || options.Sigstore.BundlePath != "advisories.db.sigstore.json" {
+				t.Fatalf("unexpected verify options %+v", options)
 			}
 			return nil
 		},
@@ -339,7 +328,7 @@ func TestRunDBUpdate(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	called := false
 
-	exitCode := runDB([]string{"update", "--url", "https://example.com/advisories.db", "--metadata-url", "https://example.com/advisories.db.metadata.json", "--signature-url", "https://example.com/advisories.db.sig", "--key", "bundle.pub.pem", "--out", "cache/advisories.db"}, &stdout, &stderr, dbDeps{
+	exitCode := runDB([]string{"update", "--url", "https://example.com/advisories.db", "--metadata-url", "https://example.com/advisories.db.metadata.json", "--bundle-url", "https://example.com/advisories.db.sigstore.json", "--out", "cache/advisories.db"}, &stdout, &stderr, dbDeps{
 		loadAdvisories:     func(string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
 		loadAdvisoryBundle: func(string, string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
 		loadOSVSource:      func(string) (vuln.AdvisoryBundle, error) { return vuln.AdvisoryBundle{}, nil },
@@ -355,11 +344,10 @@ func TestRunDBUpdate(t *testing.T) {
 		inspectDB:      func(string) (vulndb.Info, error) { return vulndb.Info{}, nil },
 		buildMetadata:  func(string, vulndb.Info) (vulndb.ArtifactMetadata, error) { return vulndb.ArtifactMetadata{}, nil },
 		writeMetadata:  func(string, vulndb.ArtifactMetadata) error { return nil },
-		writeSignature: func(string, string, string) error { return nil },
-		verifyArtifact: func(string, string, string, string) error { return nil },
+		verifyArtifact: func(vulndb.VerifyOptions) error { return nil },
 		downloadDB: func(options vulndb.DownloadOptions) error {
 			called = true
-			if options.DBURL != "https://example.com/advisories.db" || options.MetadataURL != "https://example.com/advisories.db.metadata.json" || options.SignatureURL != "https://example.com/advisories.db.sig" || options.KeyPath != "bundle.pub.pem" || options.OutPath != "cache/advisories.db" {
+			if options.DBURL != "https://example.com/advisories.db" || options.MetadataURL != "https://example.com/advisories.db.metadata.json" || options.BundleURL != "https://example.com/advisories.db.sigstore.json" || options.OutPath != "cache/advisories.db" {
 				t.Fatalf("unexpected download options %+v", options)
 			}
 			return nil

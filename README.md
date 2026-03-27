@@ -838,10 +838,10 @@ kubescan fs --path <path> [--profile default|hardening|enterprise] [--license-al
 kubescan repo [--path <path> | --url <git-url> [--ref <ref>] [--provider-native] [--sparse-path <pattern> ...] [--git-http-header <header> ...] [--git-ssh-command <command>]] [--profile default|hardening|enterprise] [--license-allow <id> ...] [--license-deny <id> ...] [--exclude-path <pattern> ...] [--secret-scan patterns|balanced|aggressive] [--report all|summary] [--color auto|always|never] [--format table|json|html|sarif|ocsf-json] [--out <file>] [--fail-on <severity>]
 kubescan vm [--rootfs <path> | --disk <path>] [--profile default|hardening|enterprise] [--secret-scan patterns|balanced|aggressive] [--license-allow <id> ...] [--license-deny <id> ...] [--exclude-path <pattern> ...] [--sbom-out <file>] [--sbom-format cyclonedx|spdx] [(--advisories <file> | --advisories-db <file> | --advisories-bundle <file> --bundle-key <file>)] [--color auto|always|never] [--format table|json|html|sarif|ocsf-json] [--out <file>] [--fail-on <severity>]
 kubescan verify bundle --bundle <file> --key <public-key>
-kubescan db build [--source-manifest <file> | --advisories <file> | --advisories-bundle <file> --bundle-key <file>] [--osv <file-or-url> ...] --out <file> [--metadata-out <file>] [--signature-out <file> --signing-key <file>]
+kubescan db build [--source-manifest <file> | --advisories <file> | --advisories-bundle <file> --bundle-key <file>] [--osv <file-or-url> ...] --out <file> [--metadata-out <file>]
 kubescan db info --db <file> [--format table|json]
-kubescan db verify --db <file> [--metadata <file>] [--signature <file> --key <public-key>]
-kubescan db update --url <url> --out <file> [--metadata-url <url>] [--signature-url <url> --key <public-key>]
+kubescan db verify --db <file> [--metadata <file>] [(--bundle <file> [sigstore flags]) | (--signature <file> --key <public-key>)]
+kubescan db update --url <url> --out <file> [--metadata-url <url>] [--bundle-url <url> [sigstore flags]] [--signature-url <url> --key <public-key>]
 kubescan-operator [--interval <duration>] [--watch=true|false] [--watch-debounce <duration>] [--cycle-timeout <duration>] [--prune-stale-reports] [--report-ttl <duration>] [--max-findings <count>] [--max-attack-paths <count>] [--kubeconfig <file>] [--context <name>] [--namespace <ns>] [--namespaced-only] [--default-only] [--profile default|hardening|enterprise] [--compliance <profile>] [--attack-paths] [--report-name <name>] [--once]
 kubescan-node-collector [--interval <duration>] [--host-root <dir>] [--kubelet-config <path>] [--node-name <name>] [--kubeconfig <file>] [--context <name>] [--once]
 ```
@@ -1876,12 +1876,13 @@ go run ./cmd/kubescan scan --input ./examples/vuln-sample.yaml --sbom ./examples
 Signed and verifiable database artifact example:
 
 ```bash
-go run ./cmd/kubescan db build --advisories ./examples/advisories.yaml --out ./advisories.db --metadata-out ./advisories.db.metadata.json --signature-out ./advisories.db.sig --signing-key ./db-signing-key.pem
-go run ./cmd/kubescan db verify --db ./advisories.db --metadata ./advisories.db.metadata.json --signature ./advisories.db.sig --key ./db-signing-key.pub.pem
-go run ./cmd/kubescan db update --url https://example.com/kubescan/advisories.db --metadata-url https://example.com/kubescan/advisories.db.metadata.json --signature-url https://example.com/kubescan/advisories.db.sig --key ./db-signing-key.pub.pem --out ./cache/advisories.db
+go run ./cmd/kubescan db build --advisories ./examples/advisories.yaml --out ./advisories.db --metadata-out ./advisories.db.metadata.json
+cosign sign-blob --yes --bundle ./advisories.db.sigstore.json ./advisories.db
+go run ./cmd/kubescan db verify --db ./advisories.db --metadata ./advisories.db.metadata.json --bundle ./advisories.db.sigstore.json
+go run ./cmd/kubescan db update --url https://example.com/kubescan/advisories.db --metadata-url https://example.com/kubescan/advisories.db.metadata.json --bundle-url https://example.com/kubescan/advisories.db.sigstore.json --out ./cache/advisories.db
 ```
 
-The current vulnerability database flow is still early, but it now has a manifest-driven upstream-ingestion slice. It can compile existing advisory bundles plus OSV JSON, Alpine SecDB, Debian Security Tracker, Ubuntu Security Notices, and Kubernetes official CVE-feed sources from local files or remote URLs into a reusable SQLite artifact, apply deterministic source-priority rules while merging overlapping advisories, emit metadata and a detached Ed25519 signature for distribution, verify those artifacts locally, download them from a remote URL with optional verification, and point `scan`, `image`, or `vm` at the cached database with `--advisories-db`, while keeping the existing plain advisory file and signed advisory bundle paths unchanged.
+The current vulnerability database flow is still early, but it now has a manifest-driven upstream-ingestion slice. It can compile existing advisory bundles plus OSV JSON, Alpine SecDB, Debian Security Tracker, Ubuntu Security Notices, and Kubernetes official CVE-feed sources from local files or remote URLs into a reusable SQLite artifact, apply deterministic source-priority rules while merging overlapping advisories, emit metadata for distribution, verify Sigstore-signed database bundles locally, download them from a remote URL with optional verification, and point `scan`, `image`, or `vm` at the cached database with `--advisories-db`, while keeping the existing plain advisory file and signed advisory bundle paths unchanged. Legacy detached Ed25519 database signatures are still accepted for compatibility, but Sigstore bundles are now the canonical database-artifact trust path.
 
 The checked-in source manifest example is [examples/vulndb-sources.yaml](./examples/vulndb-sources.yaml). It demonstrates the current source kinds and priority model:
 
@@ -1906,7 +1907,9 @@ The checked-in feed examples are:
 
 When two sources describe the same package advisory and share an overlapping ID or alias set, Kubescan keeps the higher-priority source record. Vendor-style distro feeds such as Debian Security Tracker and Ubuntu Security Notices outrank Alpine SecDB and OSV by default; Alpine SecDB outranks OSV by default unless you override priorities explicitly.
 
-For automated publishing, the repo now includes a scheduled workflow at [.github/workflows/vulndb.yaml](./.github/workflows/vulndb.yaml). By default it runs daily at `06:00 UTC`, builds from the checked-in [examples/vulndb-sources-public.yaml](./examples/vulndb-sources-public.yaml), signs the database with the `KUBESCAN_DB_SIGNING_KEY` repository secret, uploads the DB artifacts as workflow artifacts, and also publishes them to the `vulndb-latest` GitHub release. The default public manifest currently uses live Alpine SecDB, Debian Security Tracker for `bookworm`, and the official Kubernetes CVE feed. Ubuntu support is implemented in the builder and demonstrated in the checked-in local manifest, but because it is archive-based and heavier than the other feeds it is not enabled in the default scheduled public manifest yet. The same workflow also supports manual `workflow_dispatch` runs with overridable `manifest_path` and `release_tag` inputs, so you can test a one-off source manifest or publish a pinned DB snapshot without changing the daily schedule.
+For automated publishing, the repo now includes a scheduled workflow at [.github/workflows/vulndb.yaml](./.github/workflows/vulndb.yaml). By default it runs daily at `06:00 UTC`, builds from the checked-in [examples/vulndb-sources-public.yaml](./examples/vulndb-sources-public.yaml), signs the database with Sigstore keyless signing through GitHub Actions OIDC, uploads the DB artifacts as workflow artifacts, and also publishes them to the `vulndb-latest` GitHub release. The default public manifest currently uses live Alpine SecDB, Debian Security Tracker for `bookworm`, and the official Kubernetes CVE feed. Ubuntu support is implemented in the builder and demonstrated in the checked-in local manifest, but because it is archive-based and heavier than the other feeds it is not enabled in the default scheduled public manifest yet. The same workflow also supports manual `workflow_dispatch` runs with overridable `manifest_path` and `release_tag` inputs, so you can test a one-off source manifest or publish a pinned DB snapshot without changing the daily schedule.
+
+By default, `kubescan db verify` and `kubescan db update` expect the official Kubescan database bundle to be signed by the repository workflow identity matching `https://github.com/automatesecurity/kubescan/.github/workflows/vulndb.yaml@...` with the GitHub Actions OIDC issuer `https://token.actions.githubusercontent.com`. You can override that trust policy for custom or mirrored database publishers with `--certificate-identity`, `--certificate-identity-regexp`, `--certificate-oidc-issuer`, `--certificate-oidc-issuer-regexp`, `--trusted-root`, `--tuf-cache`, and `--tuf-mirror`.
 
 Once that workflow is publishing assets, a client-side update can point directly at the release-hosted files:
 
@@ -1914,8 +1917,7 @@ Once that workflow is publishing assets, a client-side update can point directly
 go run ./cmd/kubescan db update \
   --url https://github.com/automatesecurity/kubescan/releases/download/vulndb-latest/kubescan-vulndb.sqlite \
   --metadata-url https://github.com/automatesecurity/kubescan/releases/download/vulndb-latest/kubescan-vulndb.sqlite.metadata.json \
-  --signature-url https://github.com/automatesecurity/kubescan/releases/download/vulndb-latest/kubescan-vulndb.sqlite.sig \
-  --key ./db-signing-key.pub.pem \
+  --bundle-url https://github.com/automatesecurity/kubescan/releases/download/vulndb-latest/kubescan-vulndb.sqlite.sigstore.json \
   --out ./cache/advisories.db
 ```
 

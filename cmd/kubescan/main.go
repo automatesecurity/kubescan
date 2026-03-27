@@ -23,10 +23,10 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, "       kubescan repo [--path <dir> | --url <git-url> [--ref <ref>] [--provider-native] [--sparse-path <pattern> ...] [--git-http-header <header> ...] [--git-ssh-command <command>]] [--profile <name>] [--license-allow <id> ...] [--license-deny <id> ...] [--exclude-path <pattern> ...] [--secret-scan patterns|balanced|aggressive] [--report all|summary] [--color auto|always|never] [--format table|json|html|sarif|ocsf-json] [--out <file>] [--fail-on <severity>]")
 		fmt.Fprintln(os.Stderr, "       kubescan vm [--rootfs <dir> | --disk <path>] [--profile <name>] [--secret-scan patterns|balanced|aggressive] [--license-allow <id> ...] [--license-deny <id> ...] [--exclude-path <pattern> ...] [--sbom-out <file>] [--sbom-format cyclonedx|spdx] [(--advisories <file> | --advisories-db <file> | --advisories-bundle <file> --bundle-key <file>)] [--color auto|always|never] [--format table|json|html|sarif|ocsf-json] [--out <file>] [--fail-on <severity>]")
 		fmt.Fprintln(os.Stderr, "       kubescan verify bundle --bundle <file> --key <public-key>")
-		fmt.Fprintln(os.Stderr, "       kubescan db build [--source-manifest <file> | --advisories <file> | --advisories-bundle <file> --bundle-key <file>] [--osv <file-or-url> ...] --out <file> [--metadata-out <file>] [--signature-out <file> --signing-key <file>]")
+		fmt.Fprintln(os.Stderr, "       kubescan db build [--source-manifest <file> | --advisories <file> | --advisories-bundle <file> --bundle-key <file>] [--osv <file-or-url> ...] --out <file> [--metadata-out <file>]")
 		fmt.Fprintln(os.Stderr, "       kubescan db info --db <file> [--format table|json]")
-		fmt.Fprintln(os.Stderr, "       kubescan db verify --db <file> [--metadata <file>] [--signature <file> --key <public-key>]")
-		fmt.Fprintln(os.Stderr, "       kubescan db update --url <url> --out <file> [--metadata-url <url>] [--signature-url <url> --key <public-key>]")
+		fmt.Fprintln(os.Stderr, "       kubescan db verify --db <file> [--metadata <file>] [(--bundle <file> [sigstore flags]) | (--signature <file> --key <public-key>)]")
+		fmt.Fprintln(os.Stderr, "       kubescan db update --url <url> --out <file> [--metadata-url <url>] [--bundle-url <url> [sigstore flags]] [--signature-url <url> --key <public-key>]")
 		return 2
 	}
 
@@ -55,10 +55,10 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stdout, "       kubescan repo [--path <dir> | --url <git-url> [--ref <ref>] [--provider-native] [--sparse-path <pattern> ...] [--git-http-header <header> ...] [--git-ssh-command <command>]] [--profile <name>] [--license-allow <id> ...] [--license-deny <id> ...] [--exclude-path <pattern> ...] [--secret-scan patterns|balanced|aggressive] [--report all|summary] [--color auto|always|never] [--format table|json|html|sarif|ocsf-json] [--out <file>] [--fail-on <severity>]")
 		fmt.Fprintln(os.Stdout, "       kubescan vm [--rootfs <dir> | --disk <path>] [--profile <name>] [--secret-scan patterns|balanced|aggressive] [--license-allow <id> ...] [--license-deny <id> ...] [--exclude-path <pattern> ...] [--sbom-out <file>] [--sbom-format cyclonedx|spdx] [(--advisories <file> | --advisories-db <file> | --advisories-bundle <file> --bundle-key <file>)] [--color auto|always|never] [--format table|json|html|sarif|ocsf-json] [--out <file>] [--fail-on <severity>]")
 		fmt.Fprintln(os.Stdout, "       kubescan verify bundle --bundle <file> --key <public-key>")
-		fmt.Fprintln(os.Stdout, "       kubescan db build [--source-manifest <file> | --advisories <file> | --advisories-bundle <file> --bundle-key <file>] [--osv <file-or-url> ...] --out <file> [--metadata-out <file>] [--signature-out <file> --signing-key <file>]")
+		fmt.Fprintln(os.Stdout, "       kubescan db build [--source-manifest <file> | --advisories <file> | --advisories-bundle <file> --bundle-key <file>] [--osv <file-or-url> ...] --out <file> [--metadata-out <file>]")
 		fmt.Fprintln(os.Stdout, "       kubescan db info --db <file> [--format table|json]")
-		fmt.Fprintln(os.Stdout, "       kubescan db verify --db <file> [--metadata <file>] [--signature <file> --key <public-key>]")
-		fmt.Fprintln(os.Stdout, "       kubescan db update --url <url> --out <file> [--metadata-url <url>] [--signature-url <url> --key <public-key>]")
+		fmt.Fprintln(os.Stdout, "       kubescan db verify --db <file> [--metadata <file>] [(--bundle <file> [sigstore flags]) | (--signature <file> --key <public-key>)]")
+		fmt.Fprintln(os.Stdout, "       kubescan db update --url <url> --out <file> [--metadata-url <url>] [--bundle-url <url> [sigstore flags]] [--signature-url <url> --key <public-key>]")
 		return 0
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", args[0])
