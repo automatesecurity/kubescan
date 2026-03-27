@@ -1,0 +1,119 @@
+name: Vulnerability DB
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_path:
+        description: Source manifest to build from
+        required: false
+        default: ./examples/vulndb-sources-public.yaml
+      release_tag:
+        description: Release tag to publish DB artifacts to
+        required: false
+        default: vulndb-latest
+  schedule:
+    - cron: "0 6 * * *"
+
+concurrency:
+  group: vulndb-publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      MANIFEST_PATH: ${{ inputs.manifest_path || './examples/vulndb-sources-public.yaml' }}
+      RELEASE_TAG: ${{ inputs.release_tag || 'vulndb-latest' }}
+      DB_PATH: dist/kubescan-vulndb.sqlite
+      METADATA_PATH: dist/kubescan-vulndb.sqlite.metadata.json
+      SIGNATURE_PATH: dist/kubescan-vulndb.sqlite.sig
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Validate signing configuration
+        shell: bash
+        env:
+          KUBESCAN_DB_SIGNING_KEY: ${{ secrets.KUBESCAN_DB_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KUBESCAN_DB_SIGNING_KEY:-}" ]; then
+            echo "KUBESCAN_DB_SIGNING_KEY is required to publish signed vulnerability database artifacts."
+            exit 1
+          fi
+
+      - name: Build vulnerability database
+        shell: bash
+        env:
+          KUBESCAN_DB_SIGNING_KEY: ${{ secrets.KUBESCAN_DB_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          printf '%s\n' "$KUBESCAN_DB_SIGNING_KEY" > dist/db-signing-key.pem
+          chmod 600 dist/db-signing-key.pem
+          go run ./cmd/kubescan db build \
+            --source-manifest "$MANIFEST_PATH" \
+            --out "$DB_PATH" \
+            --metadata-out "$METADATA_PATH" \
+            --signature-out "$SIGNATURE_PATH" \
+            --signing-key dist/db-signing-key.pem
+
+      - name: Generate release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          metadata = json.loads(Path("dist/kubescan-vulndb.sqlite.metadata.json").read_text())
+          notes = "\n".join([
+              "Latest scheduled Kubescan vulnerability database artifact.",
+              "",
+              f"- Source manifest: `{Path('${{ env.MANIFEST_PATH }}').as_posix()}`",
+              f"- Generated at: `{metadata['generatedAt']}`",
+              f"- Database built at: `{metadata['dbBuiltAt']}`",
+              f"- Advisory count: `{metadata['dbAdvisoryCount']}`",
+              f"- Schema: `{metadata['dbSchema']} {metadata['dbSchemaVersion']}`",
+              "",
+              "Assets:",
+              "- `kubescan-vulndb.sqlite`",
+              "- `kubescan-vulndb.sqlite.metadata.json`",
+              "- `kubescan-vulndb.sqlite.sig`",
+          ])
+          Path("dist/vulndb-release-notes.md").write_text(notes + "\n")
+          PY
+
+      - name: Create or update vulnerability db release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --title "Kubescan vulnerability db" --notes-file dist/vulndb-release-notes.md
+          else
+            gh release edit "$RELEASE_TAG" --title "Kubescan vulnerability db" --notes-file dist/vulndb-release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" \
+            "$DB_PATH" \
+            "$METADATA_PATH" \
+            "$SIGNATURE_PATH" \
+            --clobber
+
+      - name: Upload vulnerability db artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubescan-vulndb
+          retention-days: 14
+          path: |
+            ${{ env.DB_PATH }}
+            ${{ env.METADATA_PATH }}
+            ${{ env.SIGNATURE_PATH }}

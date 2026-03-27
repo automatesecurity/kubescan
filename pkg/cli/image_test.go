@@ -331,6 +331,80 @@ func TestRunImageMatchesExtractedPackagesWithoutSBOM(t *testing.T) {
 	}
 }
 
+func TestRunImageLoadsAdvisoriesFromDB(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	exitCode := runImage([]string{"--image", "ghcr.io/acme/api:1.0.0", "--advisories-db", "advisories.db", "--format", "json"}, &stdout, &stderr, imageDeps{
+		inspect: func(context.Context, string, imagescan.AuthOptions) (imagescan.Metadata, error) {
+			return imagescan.Metadata{
+				Reference: "ghcr.io/acme/api:1.0.0",
+				Tag:       "1.0.0",
+				User:      "1000",
+			}, nil
+		},
+		extractSBOM: func(_ context.Context, imageRef string, auth imagescan.AuthOptions) (vuln.SBOM, error) {
+			return vuln.SBOM{
+				ImageRef: imageRef,
+				Packages: []vuln.Package{
+					{Name: "openssl", Version: "1.1.1-r0", Ecosystem: "apk"},
+				},
+			}, nil
+		},
+		loadAdvisoryDB: func(path string) (vuln.AdvisoryBundle, error) {
+			if path != "advisories.db" {
+				t.Fatalf("expected advisories.db, got %q", path)
+			}
+			return vuln.AdvisoryBundle{
+				Advisories: []vuln.Advisory{
+					{
+						ID:               "CVE-2026-0001",
+						PackageName:      "openssl",
+						Ecosystem:        "apk",
+						AffectedVersions: []string{">=1.1.1-r0,<1.1.1-r2"},
+						FixedVersion:     "1.1.1-r1",
+						Severity:         policy.SeverityHigh,
+						Summary:          "OpenSSL vulnerable package",
+					},
+				},
+			}, nil
+		},
+		loadAdvisories: func(string) (vuln.AdvisoryBundle, error) {
+			t.Fatalf("loadAdvisories should not be called")
+			return vuln.AdvisoryBundle{}, nil
+		},
+		loadAdvisoryBundle: func(string, string) (vuln.AdvisoryBundle, error) {
+			t.Fatalf("loadAdvisoryBundle should not be called")
+			return vuln.AdvisoryBundle{}, nil
+		},
+		loadSBOM: func(string) (vuln.SBOM, error) {
+			t.Fatalf("loadSBOM should not be called")
+			return vuln.SBOM{}, nil
+		},
+		scanLayers: func(context.Context, string, imagescan.AuthOptions, imagescan.LayerScanOptions, time.Time) ([]policy.Finding, error) {
+			t.Fatalf("scanLayers should not be called")
+			return nil, nil
+		},
+		writeCycloneDX: func(io.Writer, vuln.SBOM) error {
+			t.Fatalf("writeCycloneDX should not be called")
+			return nil
+		},
+		writeSPDX: func(io.Writer, vuln.SBOM) error {
+			t.Fatalf("writeSPDX should not be called")
+			return nil
+		},
+		openOutput: func(string) (io.WriteCloser, error) {
+			t.Fatalf("openOutput should not be called")
+			return nil, nil
+		},
+	})
+	if exitCode != 3 {
+		t.Fatalf("expected exit code 3, got %d, stderr=%s", exitCode, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "\"ruleId\": \"CVE-2026-0001\"") {
+		t.Fatalf("expected vulnerability finding, got %s", stdout.String())
+	}
+}
+
 func TestRunImageWritesExtractedSBOM(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	var sbomOutput bytes.Buffer

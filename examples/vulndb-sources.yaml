@@ -1,0 +1,29 @@
+apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+kind: VulnDBSources
+sources:
+  - name: curated-examples
+    kind: AdvisoryBundle
+    path: ./examples/advisories.yaml
+    priority: 90
+  - name: alpine-main-example
+    kind: AlpineSecDB
+    path: ./examples/alpine-secdb-sample.json
+    priority: 80
+  - name: debian-bookworm-example
+    kind: DebianSecurityTracker
+    path: ./examples/debian-tracker-sample.json
+    release: bookworm
+    priority: 85
+  - name: kubernetes-official-example
+    kind: KubernetesOfficialCVEFeed
+    path: ./examples/kubernetes-cve-feed-sample.json
+    priority: 78
+  - name: ubuntu-24-04-example
+    kind: UbuntuSecurityNotices
+    path: ./examples/ubuntu-osv-sample.json
+    release: 24.04
+    priority: 85
+  - name: osv-example
+    kind: OSV
+    path: ./examples/osv-sample.json
+    priority: 60

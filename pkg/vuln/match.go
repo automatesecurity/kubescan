@@ -67,7 +67,7 @@ func MatchImage(resource policy.ResourceRef, imageRef string, sbom SBOM, advisor
 }
 
 func advisoryMatchesPackage(advisory Advisory, pkg Package) bool {
-	if advisory.PackageName != pkg.Name {
+	if normalizePackageName(advisory.Ecosystem, advisory.PackageName) != normalizePackageName(pkg.Ecosystem, pkg.Name) {
 		return false
 	}
 	if advisory.Ecosystem != pkg.Ecosystem {

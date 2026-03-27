@@ -1,0 +1,20 @@
+apiVersion: kubescan.automatesecurity.github.io/v1alpha1
+kind: VulnDBSources
+sources:
+  - name: alpine-v3.20-main
+    kind: AlpineSecDB
+    url: https://secdb.alpinelinux.org/v3.20/main.json
+    priority: 80
+  - name: alpine-v3.20-community
+    kind: AlpineSecDB
+    url: https://secdb.alpinelinux.org/v3.20/community.json
+    priority: 80
+  - name: debian-bookworm
+    kind: DebianSecurityTracker
+    url: https://security-tracker.debian.org/tracker/data/json
+    release: bookworm
+    priority: 85
+  - name: kubernetes-official
+    kind: KubernetesOfficialCVEFeed
+    url: https://k8s.io/docs/reference/issues-security/official-cve-feed/index.json
+    priority: 78

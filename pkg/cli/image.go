@@ -17,6 +17,7 @@ import (
 	"kubescan/pkg/report"
 	"kubescan/pkg/secretscan"
 	"kubescan/pkg/vuln"
+	"kubescan/pkg/vulndb"
 )
 
 type imageInspectWithAuthFunc func(context.Context, string, imagescan.AuthOptions) (imagescan.Metadata, error)
@@ -31,6 +32,7 @@ type imageDeps struct {
 	writeSPDX          sbomWriteFunc
 	loadSBOM           func(string) (vuln.SBOM, error)
 	loadAdvisories     func(string) (vuln.AdvisoryBundle, error)
+	loadAdvisoryDB     func(string) (vuln.AdvisoryBundle, error)
 	loadAdvisoryBundle func(string, string) (vuln.AdvisoryBundle, error)
 	openOutput         func(string) (io.WriteCloser, error)
 	stdin              io.Reader
@@ -45,6 +47,7 @@ func RunImage(args []string, stdout, stderr io.Writer) int {
 		writeSPDX:          vuln.WriteSPDX,
 		loadSBOM:           vuln.LoadSBOM,
 		loadAdvisories:     vuln.LoadAdvisories,
+		loadAdvisoryDB:     vulndb.Load,
 		loadAdvisoryBundle: bundle.LoadSignedAdvisories,
 		openOutput:         openOutputFile,
 		stdin:              os.Stdin,
@@ -65,6 +68,7 @@ func runImage(args []string, stdout, stderr io.Writer, deps imageDeps) int {
 	sbomOut := fs.String("sbom-out", "", "write extracted image package inventory as a CycloneDX JSON SBOM file")
 	sbomFormat := fs.String("sbom-format", "cyclonedx", "SBOM output format for --sbom-out: cyclonedx or spdx")
 	advisoriesFile := fs.String("advisories", "", "path to an advisory bundle file")
+	advisoriesDBFile := fs.String("advisories-db", "", "path to a local vulnerability sqlite database")
 	advisoriesBundleFile := fs.String("advisories-bundle", "", "path to a signed advisory bundle file")
 	bundleKeyFile := fs.String("bundle-key", "", "path to an Ed25519 public key for signed bundle verification")
 	secretScanModeName := fs.String("secret-scan", string(secretscan.ModeBalanced), "secret scan mode for image layers: patterns, balanced, or aggressive")
@@ -100,12 +104,22 @@ func runImage(args []string, stdout, stderr io.Writer, deps imageDeps) int {
 		fmt.Fprintln(stderr, "registry password auth requires --registry-username")
 		return 2
 	}
-	if *advisoriesFile != "" && *advisoriesBundleFile != "" {
-		fmt.Fprintln(stderr, "--advisories and --advisories-bundle cannot be used together")
+	advisoryInputs := 0
+	if *advisoriesFile != "" {
+		advisoryInputs++
+	}
+	if *advisoriesDBFile != "" {
+		advisoryInputs++
+	}
+	if *advisoriesBundleFile != "" {
+		advisoryInputs++
+	}
+	if advisoryInputs > 1 {
+		fmt.Fprintln(stderr, "--advisories, --advisories-db, and --advisories-bundle cannot be used together")
 		return 2
 	}
-	if *sbomFile != "" && *advisoriesFile == "" && *advisoriesBundleFile == "" {
-		fmt.Fprintln(stderr, "--sbom requires --advisories or --advisories-bundle")
+	if *sbomFile != "" && advisoryInputs == 0 {
+		fmt.Fprintln(stderr, "--sbom requires --advisories, --advisories-db, or --advisories-bundle")
 		return 2
 	}
 	if *sbomFile != "" && *sbomOut != "" {
@@ -196,7 +210,7 @@ func runImage(args []string, stdout, stderr io.Writer, deps imageDeps) int {
 	}
 
 	var extractedSBOM *vuln.SBOM
-	if *sbomOut != "" || ((*advisoriesFile != "" || *advisoriesBundleFile != "") && *sbomFile == "") {
+	if *sbomOut != "" || (advisoryInputs > 0 && *sbomFile == "") {
 		if deps.extractSBOM == nil {
 			fmt.Fprintln(stderr, "image package extraction is not configured")
 			return 1
@@ -232,12 +246,18 @@ func runImage(args []string, stdout, stderr io.Writer, deps imageDeps) int {
 			return 1
 		}
 	}
-	if *sbomFile != "" || *advisoriesFile != "" || *advisoriesBundleFile != "" {
+	if *sbomFile != "" || advisoryInputs > 0 {
 		var advisories vuln.AdvisoryBundle
 		if *advisoriesBundleFile != "" {
 			advisories, err = deps.loadAdvisoryBundle(*advisoriesBundleFile, *bundleKeyFile)
 			if err != nil {
 				fmt.Fprintf(stderr, "load advisories bundle: %v\n", err)
+				return 1
+			}
+		} else if *advisoriesDBFile != "" {
+			advisories, err = deps.loadAdvisoryDB(*advisoriesDBFile)
+			if err != nil {
+				fmt.Fprintf(stderr, "load advisories db: %v\n", err)
 				return 1
 			}
 		} else {

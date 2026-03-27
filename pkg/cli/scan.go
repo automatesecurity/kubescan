@@ -18,6 +18,7 @@ import (
 	"kubescan/pkg/policy"
 	"kubescan/pkg/report"
 	"kubescan/pkg/vuln"
+	"kubescan/pkg/vulndb"
 )
 
 type clusterCollectFunc func(context.Context, k8s.ClusterOptions) (policy.Inventory, error)
@@ -30,6 +31,7 @@ type scanDeps struct {
 	loadRuleBundle     func(string, string) (policy.RuleBundle, error)
 	loadSBOM           func(string) (vuln.SBOM, error)
 	loadAdvisories     func(string) (vuln.AdvisoryBundle, error)
+	loadAdvisoryDB     func(string) (vuln.AdvisoryBundle, error)
 	loadAdvisoryBundle func(string, string) (vuln.AdvisoryBundle, error)
 	renderHelm         func(string, string, string, []string) ([]byte, error)
 	renderKustomize    func(string) ([]byte, error)
@@ -57,6 +59,7 @@ func RunScan(args []string, stdout, stderr io.Writer) int {
 		loadRuleBundle:     bundle.LoadSignedRuleBundle,
 		loadSBOM:           vuln.LoadSBOM,
 		loadAdvisories:     vuln.LoadAdvisories,
+		loadAdvisoryDB:     vulndb.Load,
 		loadAdvisoryBundle: bundle.LoadSignedAdvisories,
 		renderHelm:         renderHelmChart,
 		renderKustomize:    renderKustomizeDir,
@@ -90,6 +93,7 @@ func runScan(args []string, stdout, stderr io.Writer, deps scanDeps) int {
 	fs.Var(&includeNamespaces, "include-namespace", "only scan these namespaces; repeat or use comma-separated values")
 	fs.Var(&excludeNamespaces, "exclude-namespace", "exclude these namespaces; repeat or use comma-separated values")
 	advisoriesFile := fs.String("advisories", "", "path to an advisory bundle file")
+	advisoriesDBFile := fs.String("advisories-db", "", "path to a local vulnerability sqlite database")
 	advisoriesBundleFile := fs.String("advisories-bundle", "", "path to a signed advisory bundle file")
 	componentVulnsEnabled := fs.Bool("component-vulns", false, "match live cluster control-plane and node components against advisories")
 	bundleKeyFile := fs.String("bundle-key", "", "path to an Ed25519 public key for signed bundle verification")
@@ -134,20 +138,30 @@ func runScan(args []string, stdout, stderr io.Writer, deps scanDeps) int {
 		fmt.Fprintln(stderr, "--policy and --policy-bundle cannot be used together")
 		return 2
 	}
-	if *advisoriesFile != "" && *advisoriesBundleFile != "" {
-		fmt.Fprintln(stderr, "--advisories and --advisories-bundle cannot be used together")
+	advisoryInputs := 0
+	if *advisoriesFile != "" {
+		advisoryInputs++
+	}
+	if *advisoriesDBFile != "" {
+		advisoryInputs++
+	}
+	if *advisoriesBundleFile != "" {
+		advisoryInputs++
+	}
+	if advisoryInputs > 1 {
+		fmt.Fprintln(stderr, "--advisories, --advisories-db, and --advisories-bundle cannot be used together")
 		return 2
 	}
-	if len(sbomFiles) > 0 && *advisoriesFile == "" && *advisoriesBundleFile == "" {
-		fmt.Fprintln(stderr, "--sbom requires --advisories or --advisories-bundle")
+	if len(sbomFiles) > 0 && advisoryInputs == 0 {
+		fmt.Fprintln(stderr, "--sbom requires --advisories, --advisories-db, or --advisories-bundle")
 		return 2
 	}
-	if *componentVulnsEnabled && *advisoriesFile == "" && *advisoriesBundleFile == "" {
-		fmt.Fprintln(stderr, "--component-vulns requires --advisories or --advisories-bundle")
+	if *componentVulnsEnabled && advisoryInputs == 0 {
+		fmt.Fprintln(stderr, "--component-vulns requires --advisories, --advisories-db, or --advisories-bundle")
 		return 2
 	}
-	if len(sbomFiles) == 0 && !*componentVulnsEnabled && (*advisoriesFile != "" || *advisoriesBundleFile != "") {
-		fmt.Fprintln(stderr, "--advisories and --advisories-bundle require at least one --sbom or --component-vulns")
+	if len(sbomFiles) == 0 && !*componentVulnsEnabled && advisoryInputs > 0 {
+		fmt.Fprintln(stderr, "--advisories, --advisories-db, and --advisories-bundle require at least one --sbom or --component-vulns")
 		return 2
 	}
 	if (*advisoriesBundleFile != "" || *policyBundleFile != "") && *bundleKeyFile == "" {
@@ -295,6 +309,12 @@ func runScan(args []string, stdout, stderr io.Writer, deps scanDeps) int {
 			advisories, err = deps.loadAdvisoryBundle(*advisoriesBundleFile, *bundleKeyFile)
 			if err != nil {
 				fmt.Fprintf(stderr, "load advisories bundle: %v\n", err)
+				return 1
+			}
+		} else if *advisoriesDBFile != "" {
+			advisories, err = deps.loadAdvisoryDB(*advisoriesDBFile)
+			if err != nil {
+				fmt.Fprintf(stderr, "load advisories db: %v\n", err)
 				return 1
 			}
 		} else {

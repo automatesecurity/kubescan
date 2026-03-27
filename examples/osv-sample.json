@@ -1,0 +1,31 @@
+[
+  {
+    "id": "GHSA-1234-example",
+    "aliases": ["CVE-2026-9999"],
+    "summary": "Example OSV advisory for Jinja2",
+    "database_specific": {
+      "severity": "high"
+    },
+    "affected": [
+      {
+        "package": {
+          "name": "jinja2",
+          "ecosystem": "PyPI"
+        },
+        "ranges": [
+          {
+            "type": "ECOSYSTEM",
+            "events": [
+              {
+                "introduced": "2.0.0"
+              },
+              {
+                "fixed": "3.1.6"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

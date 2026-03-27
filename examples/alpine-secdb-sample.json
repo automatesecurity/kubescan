@@ -1,0 +1,26 @@
+{
+  "distroversion": "v3.20",
+  "reponame": "main",
+  "packages": [
+    {
+      "pkg": {
+        "name": "openssl",
+        "secfixes": {
+          "3.0.15-r0": [
+            "CVE-2026-0001"
+          ]
+        }
+      }
+    },
+    {
+      "pkg": {
+        "name": "busybox",
+        "secfixes": {
+          "1.36.1-r2": [
+            "CVE-2026-0002"
+          ]
+        }
+      }
+    }
+  ]
+}

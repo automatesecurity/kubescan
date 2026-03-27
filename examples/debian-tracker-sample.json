@@ -1,0 +1,14 @@
+{
+  "openssl": {
+    "CVE-2026-0003": {
+      "description": "Debian tracker sample advisory for OpenSSL",
+      "releases": {
+        "bookworm": {
+          "status": "resolved",
+          "fixed_version": "3.0.18-1~deb12u2",
+          "urgency": "high"
+        }
+      }
+    }
+  }
+}

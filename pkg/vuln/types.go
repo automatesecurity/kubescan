@@ -36,4 +36,6 @@ type Advisory struct {
 	FixedVersion     string          `json:"fixedVersion,omitempty" yaml:"fixedVersion"`
 	Severity         policy.Severity `json:"severity" yaml:"severity"`
 	Summary          string          `json:"summary" yaml:"summary"`
+	Source           string          `json:"source,omitempty" yaml:"source,omitempty"`
+	SourcePriority   int             `json:"sourcePriority,omitempty" yaml:"sourcePriority,omitempty"`
 }

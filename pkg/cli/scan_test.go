@@ -107,7 +107,7 @@ func TestRunScanRejectsComponentVulnsWithoutAdvisories(t *testing.T) {
 	if exitCode != 2 {
 		t.Fatalf("expected exit code 2, got %d", exitCode)
 	}
-	if !strings.Contains(stderr.String(), "--component-vulns requires --advisories or --advisories-bundle") {
+	if !strings.Contains(stderr.String(), "--component-vulns requires --advisories, --advisories-db, or --advisories-bundle") {
 		t.Fatalf("expected component-vulns advisory validation error, got %s", stderr.String())
 	}
 }
@@ -831,7 +831,7 @@ func TestRunScanRejectsHalfConfiguredVulnInputs(t *testing.T) {
 	if exitCode != 2 {
 		t.Fatalf("expected exit code 2, got %d", exitCode)
 	}
-	if !strings.Contains(stderr.String(), "--sbom requires --advisories or --advisories-bundle") {
+	if !strings.Contains(stderr.String(), "--sbom requires --advisories, --advisories-db, or --advisories-bundle") {
 		t.Fatalf("expected paired-input error, got %s", stderr.String())
 	}
 }
@@ -1357,6 +1357,86 @@ func TestRunScanMatchesClusterComponentVulnerabilities(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "\"componentName\": \"kubelet\"") {
 		t.Fatalf("expected component evidence in output, got %s", stdout.String())
+	}
+}
+
+func TestRunScanLoadsAdvisoriesFromDB(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sample.yaml")
+	if err := os.WriteFile(path, []byte(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: payments
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/acme/api:1.0.0
+`), 0o600); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	exitCode := runScan([]string{"--input", path, "--sbom", "image.sbom.json", "--advisories-db", "advisories.db", "--format", "json"}, &stdout, &stderr, scanDeps{
+		loadFromFile: loadInventoryFromFile,
+		loadPolicy: func(string) (policy.Controls, error) {
+			t.Fatalf("loadPolicy should not be called")
+			return policy.Controls{}, nil
+		},
+		loadSBOM: func(path string) (vuln.SBOM, error) {
+			if path != "image.sbom.json" {
+				t.Fatalf("unexpected sbom path %q", path)
+			}
+			return vuln.SBOM{
+				ImageRef: "ghcr.io/acme/api:1.0.0",
+				Packages: []vuln.Package{
+					{Name: "openssl", Version: "1.1.1-r0", Ecosystem: "apk"},
+				},
+			}, nil
+		},
+		loadAdvisoryDB: func(path string) (vuln.AdvisoryBundle, error) {
+			if path != "advisories.db" {
+				t.Fatalf("unexpected db path %q", path)
+			}
+			return vuln.AdvisoryBundle{
+				Advisories: []vuln.Advisory{
+					{
+						ID:               "CVE-2026-0001",
+						PackageName:      "openssl",
+						Ecosystem:        "apk",
+						AffectedVersions: []string{">=1.1.1-r0,<1.1.1-r2"},
+						FixedVersion:     "1.1.1-r1",
+						Severity:         policy.SeverityHigh,
+						Summary:          "OpenSSL vulnerable package",
+					},
+				},
+			}, nil
+		},
+		loadAdvisories: func(string) (vuln.AdvisoryBundle, error) {
+			t.Fatalf("loadAdvisories should not be called")
+			return vuln.AdvisoryBundle{}, nil
+		},
+		loadAdvisoryBundle: func(string, string) (vuln.AdvisoryBundle, error) {
+			t.Fatalf("loadAdvisoryBundle should not be called")
+			return vuln.AdvisoryBundle{}, nil
+		},
+		collect: func(context.Context, k8s.ClusterOptions) (policy.Inventory, error) {
+			t.Fatalf("collect should not be called")
+			return policy.Inventory{}, nil
+		},
+		openOutput: func(string) (io.WriteCloser, error) {
+			t.Fatalf("openOutput should not be called")
+			return nil, nil
+		},
+	})
+	if exitCode != 3 {
+		t.Fatalf("expected exit code 3, got %d, stderr=%s", exitCode, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "\"ruleId\": \"CVE-2026-0001\"") {
+		t.Fatalf("expected vulnerability finding in output, got %s", stdout.String())
 	}
 }
 

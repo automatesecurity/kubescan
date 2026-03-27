@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.7.0",
+  "id": "UBUNTU-CVE-2026-0004",
+  "summary": "Ubuntu security notices sample advisory",
+  "upstream": [
+    "CVE-2026-0004"
+  ],
+  "severity": [
+    {
+      "type": "Ubuntu",
+      "score": "high"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "ecosystem": "Ubuntu:24.04:LTS",
+        "name": "openssl"
+      },
+      "versions": [
+        "3.0.13-0ubuntu3.2"
+      ],
+      "ecosystem_specific": {
+        "binaries": [
+          {
+            "binary_name": "libssl3",
+            "binary_version": "3.0.13-0ubuntu3.2"
+          },
+          {
+            "binary_name": "openssl",
+            "binary_version": "3.0.13-0ubuntu3.2"
+          }
+        ]
+      }
+    }
+  ]
+}

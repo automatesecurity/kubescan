@@ -15,6 +15,7 @@ import (
 	"kubescan/pkg/secretscan"
 	"kubescan/pkg/vmscan"
 	"kubescan/pkg/vuln"
+	"kubescan/pkg/vulndb"
 )
 
 type vmDeps struct {
@@ -24,6 +25,7 @@ type vmDeps struct {
 	writeCycloneDX     sbomWriteFunc
 	writeSPDX          sbomWriteFunc
 	loadAdvisories     func(string) (vuln.AdvisoryBundle, error)
+	loadAdvisoryDB     func(string) (vuln.AdvisoryBundle, error)
 	loadAdvisoryBundle func(string, string) (vuln.AdvisoryBundle, error)
 	openOutput         func(string) (io.WriteCloser, error)
 }
@@ -36,6 +38,7 @@ func RunVM(args []string, stdout, stderr io.Writer) int {
 		writeCycloneDX:     vuln.WriteCycloneDX,
 		writeSPDX:          vuln.WriteSPDX,
 		loadAdvisories:     vuln.LoadAdvisories,
+		loadAdvisoryDB:     vulndb.Load,
 		loadAdvisoryBundle: bundle.LoadSignedAdvisories,
 		openOutput:         openOutputFile,
 	})
@@ -50,6 +53,7 @@ func runVM(args []string, stdout, stderr io.Writer, deps vmDeps) int {
 	profileName := fs.String("profile", string(policy.RuleProfileDefault), "built-in rule profile: default, hardening, or enterprise")
 	secretScanModeName := fs.String("secret-scan", string(secretscan.ModeBalanced), "secret scan mode: patterns, balanced, or aggressive")
 	advisoriesFile := fs.String("advisories", "", "path to an advisory bundle file")
+	advisoriesDBFile := fs.String("advisories-db", "", "path to a local vulnerability sqlite database")
 	advisoriesBundleFile := fs.String("advisories-bundle", "", "path to a signed advisory bundle file")
 	bundleKeyFile := fs.String("bundle-key", "", "path to an Ed25519 public key for signed bundle verification")
 	sbomOut := fs.String("sbom-out", "", "write extracted VM package inventory as a CycloneDX JSON SBOM file")
@@ -76,8 +80,18 @@ func runVM(args []string, stdout, stderr io.Writer, deps vmDeps) int {
 		fmt.Fprintln(stderr, "--rootfs and --disk cannot be used together")
 		return 2
 	}
-	if *advisoriesFile != "" && *advisoriesBundleFile != "" {
-		fmt.Fprintln(stderr, "--advisories and --advisories-bundle cannot be used together")
+	advisoryInputs := 0
+	if *advisoriesFile != "" {
+		advisoryInputs++
+	}
+	if *advisoriesDBFile != "" {
+		advisoryInputs++
+	}
+	if *advisoriesBundleFile != "" {
+		advisoryInputs++
+	}
+	if advisoryInputs > 1 {
+		fmt.Fprintln(stderr, "--advisories, --advisories-db, and --advisories-bundle cannot be used together")
 		return 2
 	}
 	if *advisoriesBundleFile != "" && *bundleKeyFile == "" {
@@ -145,7 +159,7 @@ func runVM(args []string, stdout, stderr io.Writer, deps vmDeps) int {
 	}
 
 	var extractedSBOM *vuln.SBOM
-	if *sbomOut != "" || *advisoriesFile != "" || *advisoriesBundleFile != "" {
+	if *sbomOut != "" || advisoryInputs > 0 {
 		sbom, err := deps.extractSBOM(target)
 		if err != nil {
 			fmt.Fprintf(stderr, "extract vm packages: %v\n", err)
@@ -178,10 +192,12 @@ func runVM(args []string, stdout, stderr io.Writer, deps vmDeps) int {
 			return 1
 		}
 	}
-	if *advisoriesFile != "" || *advisoriesBundleFile != "" {
+	if advisoryInputs > 0 {
 		var advisories vuln.AdvisoryBundle
 		if *advisoriesBundleFile != "" {
 			advisories, err = deps.loadAdvisoryBundle(*advisoriesBundleFile, *bundleKeyFile)
+		} else if *advisoriesDBFile != "" {
+			advisories, err = deps.loadAdvisoryDB(*advisoriesDBFile)
 		} else {
 			advisories, err = deps.loadAdvisories(*advisoriesFile)
 		}
