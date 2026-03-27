@@ -57,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cosign sign-blob --yes --bundle "$BUNDLE_PATH" "$DB_PATH"
+          cosign sign-blob --yes --new-bundle-format --bundle "$BUNDLE_PATH" "$DB_PATH"
 
       - name: Verify vulnerability database Sigstore bundle
         shell: bash

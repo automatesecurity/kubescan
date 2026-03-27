@@ -1877,7 +1877,7 @@ Signed and verifiable database artifact example:
 
 ```bash
 go run ./cmd/kubescan db build --advisories ./examples/advisories.yaml --out ./advisories.db --metadata-out ./advisories.db.metadata.json
-cosign sign-blob --yes --bundle ./advisories.db.sigstore.json ./advisories.db
+cosign sign-blob --yes --new-bundle-format --bundle ./advisories.db.sigstore.json ./advisories.db
 go run ./cmd/kubescan db verify --db ./advisories.db --metadata ./advisories.db.metadata.json --bundle ./advisories.db.sigstore.json
 go run ./cmd/kubescan db update --url https://example.com/kubescan/advisories.db --metadata-url https://example.com/kubescan/advisories.db.metadata.json --bundle-url https://example.com/kubescan/advisories.db.sigstore.json --out ./cache/advisories.db
 ```

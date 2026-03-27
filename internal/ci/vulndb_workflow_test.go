@@ -17,7 +17,7 @@ func TestVulnDBWorkflowPublishesScheduledSignedArtifacts(t *testing.T) {
 		"sigstore/cosign-installer@v3",
 		"--source-manifest \"$MANIFEST_PATH\"",
 		"--metadata-out \"$METADATA_PATH\"",
-		"cosign sign-blob --yes --bundle \"$BUNDLE_PATH\" \"$DB_PATH\"",
+		"cosign sign-blob --yes --new-bundle-format --bundle \"$BUNDLE_PATH\" \"$DB_PATH\"",
 		"cosign verify-blob",
 		"--bundle \"$BUNDLE_PATH\"",
 		"--certificate-identity-regexp 'https://github.com/.+/.+/.github/workflows/vulndb.yaml@.+'",
