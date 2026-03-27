@@ -8,6 +8,7 @@ import (
 func TestReleaseWorkflowIncludesArtifactSigningAndProvenance(t *testing.T) {
 	workflow := readRepositoryFile(t, ".github/workflows/release.yaml")
 	for _, expected := range []string{
+		`- "v[0-9]*"`,
 		"id-token: write",
 		"attestations: write",
 		"sigstore/cosign-installer@v3",
