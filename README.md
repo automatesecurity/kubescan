@@ -1,5 +1,11 @@
 # Kubescan
 
+[![CI](https://img.shields.io/github/actions/workflow/status/automatesecurity/kubescan/ci.yaml?branch=main&label=CI)](https://github.com/automatesecurity/kubescan/actions/workflows/ci.yaml)
+[![Vuln DB](https://img.shields.io/github/actions/workflow/status/automatesecurity/kubescan/vulndb.yaml?label=vuln-db)](https://github.com/automatesecurity/kubescan/actions/workflows/vulndb.yaml)
+[![Release](https://img.shields.io/github/v/release/automatesecurity/kubescan?label=release)](https://github.com/automatesecurity/kubescan/releases)
+[![License](https://img.shields.io/github/license/automatesecurity/kubescan)](https://github.com/automatesecurity/kubescan/blob/main/LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/automatesecurity/kubescan)](https://github.com/automatesecurity/kubescan/blob/main/go.mod)
+
 Kubescan is a Kubernetes-focused security analysis tool for deterministic posture, relationship, vulnerability, and attack-path scanning across live clusters, manifests, images, repositories, and filesystem inputs. It is designed to give operators and security teams a high-signal view of Kubernetes risk with versioned machine-readable output, signed policy inputs, and an architecture that works in both CLI and in-cluster operator mode.
 
 Kubescan is not a general-purpose cloud security platform, runtime detection/response product, or exploit-prevention system. It does not try to replace admission control, node/runtime enforcement, or broad multi-cloud CSPM tooling. Its scope is to analyze and report Kubernetes-centric risk clearly and predictably, while leaving active prevention, runtime blocking, and non-Kubernetes platform enforcement to other systems.
