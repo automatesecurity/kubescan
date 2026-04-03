@@ -481,8 +481,7 @@ func (r *Runner) evaluatePolicy(ctx context.Context, named namedPolicy) (*report
 		attackPaths = attackpath.Analyze(inventory, findings)
 	}
 
-	result := report.BuildScanResultWithAttackPathsAndCompliance(findings, attackPaths, complianceReport)
-	result.GeneratedAt = r.now().UTC()
+	result := report.BuildScanResultWithAttackPathsAndCompliance(findings, attackPaths, complianceReport, r.now().UTC())
 	return &result, resolvedBundles.statuses, resolvedBundles.usedCachedSources, nil
 }
 

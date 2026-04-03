@@ -211,7 +211,7 @@ func makeFinding(ruleID string, category policy.Category, title string, severity
 	}, "|")))
 
 	return policy.Finding{
-		ID:          hex.EncodeToString(sum[:8]),
+		ID:          hex.EncodeToString(sum[:12]),
 		Category:    category,
 		RuleID:      ruleID,
 		Title:       title,
@@ -239,32 +239,11 @@ func usesMutableTag(image string) bool {
 }
 
 func imageRegistry(image string) (string, bool) {
-	repository := image
-	if at := strings.Index(repository, "@"); at >= 0 {
-		repository = repository[:at]
-	}
-	lastSlash := strings.LastIndex(repository, "/")
-	lastColon := strings.LastIndex(repository, ":")
-	if lastColon > lastSlash {
-		repository = repository[:lastColon]
-	}
-	firstSegment := repository
-	if slash := strings.Index(firstSegment, "/"); slash >= 0 {
-		firstSegment = firstSegment[:slash]
-	}
-	if strings.Contains(firstSegment, ".") || strings.Contains(firstSegment, ":") || firstSegment == "localhost" {
-		return firstSegment, false
-	}
-	return "docker.io", true
+	return policy.ImageRegistry(image)
 }
 
 func isPublicRegistry(registry string) bool {
-	switch strings.ToLower(registry) {
-	case "docker.io", "index.docker.io", "registry-1.docker.io", "quay.io", "ghcr.io", "gcr.io", "k8s.gcr.io", "registry.k8s.io", "mcr.microsoft.com", "public.ecr.aws":
-		return true
-	default:
-		return false
-	}
+	return policy.IsPublicRegistry(registry)
 }
 
 func isRootUser(user string) bool {

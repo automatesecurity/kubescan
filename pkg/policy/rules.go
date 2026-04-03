@@ -318,9 +318,13 @@ func runAsNonRootRule() Rule {
 		for _, workload := range inventory.Workloads {
 			for _, container := range workload.Containers {
 				if container.RunAsNonRoot == nil || !*container.RunAsNonRoot {
+					runAsNonRoot := false
+					if container.RunAsNonRoot != nil {
+						runAsNonRoot = *container.RunAsNonRoot
+					}
 					findings = append(findings, makeFinding(rule, workload.Resource, containerMessage(workload, container, "does not enforce runAsNonRoot"), map[string]any{
 						"container":    container.Name,
-						"runAsNonRoot": container.RunAsNonRoot,
+						"runAsNonRoot": runAsNonRoot,
 					}))
 				}
 			}
@@ -444,10 +448,15 @@ func controlPlaneSchedulingRule() Rule {
 		Remediation: "Do not target control-plane nodes directly from application workloads; restrict such scheduling to tightly controlled administrative components.",
 	}
 	rule.Check = func(inventory Inventory) []Finding {
+		controlPlaneNodes := map[string]struct{}{}
+		for _, node := range inventory.Nodes {
+			if isControlPlaneNode(node) {
+				controlPlaneNodes[node.Resource.Name] = struct{}{}
+			}
+		}
 		var findings []Finding
 		for _, workload := range inventory.Workloads {
-			nodeName := strings.ToLower(workload.NodeName)
-			hasNodeTarget := strings.Contains(nodeName, "control-plane") || strings.Contains(nodeName, "master")
+			_, hasNodeTarget := controlPlaneNodes[workload.NodeName]
 			hasToleration := hasControlPlaneToleration(workload.Tolerations)
 			if !hasNodeTarget && !hasToleration {
 				continue
@@ -782,7 +791,7 @@ func kubeletAuthorizationModeRule() Rule {
 	rule.Check = func(inventory Inventory) []Finding {
 		var findings []Finding
 		for _, node := range inventory.Nodes {
-			if strings.EqualFold(strings.TrimSpace(node.KubeletAuthorizationMode), "webhook") || strings.TrimSpace(node.KubeletAuthorizationMode) == "" {
+			if strings.EqualFold(strings.TrimSpace(node.KubeletAuthorizationMode), "webhook") {
 				continue
 			}
 			findings = append(findings, makeFinding(rule, node.Resource, "Node/"+node.Resource.Name+" uses a non-webhook kubelet authorization mode", map[string]any{
@@ -926,6 +935,9 @@ func kubeletClientCAFileRule() Rule {
 	rule.Check = func(inventory Inventory) []Finding {
 		var findings []Finding
 		for _, node := range inventory.Nodes {
+			if strings.TrimSpace(node.KubeletConfigPath) == "" {
+				continue
+			}
 			if strings.TrimSpace(node.KubeletAuthenticationX509ClientCAFile) != "" {
 				continue
 			}
@@ -1607,8 +1619,8 @@ func publicRegistryImageRule() Rule {
 		var findings []Finding
 		for _, workload := range inventory.Workloads {
 			for _, container := range workload.Containers {
-				registry, implicit := imageRegistry(container.Image)
-				if !implicit && !isPublicRegistry(registry) {
+				registry, implicit := ImageRegistry(container.Image)
+				if !implicit && !IsPublicRegistry(registry) {
 					continue
 				}
 				findings = append(findings, makeFinding(rule, workload.Resource, containerMessage(workload, container, "pulls from a public or implicit registry"), map[string]any{
@@ -2019,7 +2031,7 @@ func nodeTaintEvidence(taints []Taint) []map[string]any {
 	return result
 }
 
-func imageRegistry(image string) (string, bool) {
+func ImageRegistry(image string) (string, bool) {
 	repository := image
 	if at := strings.Index(repository, "@"); at >= 0 {
 		repository = repository[:at]
@@ -2039,7 +2051,7 @@ func imageRegistry(image string) (string, bool) {
 	return "docker.io", true
 }
 
-func isPublicRegistry(registry string) bool {
+func IsPublicRegistry(registry string) bool {
 	switch strings.ToLower(registry) {
 	case "docker.io", "index.docker.io", "registry-1.docker.io", "quay.io", "ghcr.io", "gcr.io", "k8s.gcr.io", "registry.k8s.io", "mcr.microsoft.com", "public.ecr.aws":
 		return true

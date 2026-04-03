@@ -148,15 +148,15 @@ func compareDebianPart(left, right string) int {
 }
 
 func debianLeading(value string, digits bool) (string, string) {
+	runes := []rune(value)
 	index := 0
-	for index < len(value) {
-		r := rune(value[index])
-		if unicode.IsDigit(r) != digits {
+	for index < len(runes) {
+		if unicode.IsDigit(runes[index]) != digits {
 			break
 		}
 		index++
 	}
-	return value[:index], value[index:]
+	return string(runes[:index]), string(runes[index:])
 }
 
 func compareDebianNonDigit(left, right string) int {

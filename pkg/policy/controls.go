@@ -167,7 +167,7 @@ func matchesFinding(ruleID, namespace, kind, name string, finding Finding) bool 
 	if namespace != "" && namespace != finding.Resource.Namespace {
 		return false
 	}
-	if kind != "" && kind != finding.Resource.Kind {
+	if kind != "" && !strings.EqualFold(kind, finding.Resource.Kind) {
 		return false
 	}
 	if name != "" && name != finding.Resource.Name {

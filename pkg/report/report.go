@@ -58,18 +58,18 @@ type ScanResult struct {
 }
 
 func BuildScanResult(findings []policy.Finding) ScanResult {
-	return BuildScanResultWithAttackPathsAndCompliance(findings, nil, nil)
+	return BuildScanResultWithAttackPathsAndCompliance(findings, nil, nil, time.Now().UTC())
 }
 
 func BuildScanResultWithCompliance(findings []policy.Finding, compliance *policy.ComplianceReport) ScanResult {
-	return BuildScanResultWithAttackPathsAndCompliance(findings, nil, compliance)
+	return BuildScanResultWithAttackPathsAndCompliance(findings, nil, compliance, time.Now().UTC())
 }
 
 func BuildScanResultWithAttackPaths(findings []policy.Finding, attackPaths []attackpath.Result) ScanResult {
-	return BuildScanResultWithAttackPathsAndCompliance(findings, attackPaths, nil)
+	return BuildScanResultWithAttackPathsAndCompliance(findings, attackPaths, nil, time.Now().UTC())
 }
 
-func BuildScanResultWithAttackPathsAndCompliance(findings []policy.Finding, attackPaths []attackpath.Result, compliance *policy.ComplianceReport) ScanResult {
+func BuildScanResultWithAttackPathsAndCompliance(findings []policy.Finding, attackPaths []attackpath.Result, compliance *policy.ComplianceReport, now time.Time) ScanResult {
 	summary := Summary{
 		TotalBySeverity: map[policy.Severity]int{},
 		AttackPaths: AttackPathSummary{
@@ -106,7 +106,7 @@ func BuildScanResultWithAttackPathsAndCompliance(findings []policy.Finding, atta
 	summary.AttackPaths.ByID = summaryEntries(byAttackPathID)
 
 	return ScanResult{
-		GeneratedAt: time.Now().UTC(),
+		GeneratedAt: now,
 		Summary:     summary,
 		Compliance:  compliance,
 		Findings:    findings,
@@ -410,8 +410,8 @@ func writeSummaryBreakdownSection(w io.Writer, title, header string, entries []S
 
 func sortFindings(findings []policy.Finding) {
 	sort.Slice(findings, func(i, j int) bool {
-		leftRank := severityWeight(findings[i].Severity)
-		rightRank := severityWeight(findings[j].Severity)
+		leftRank := policy.SeverityWeight(findings[i].Severity)
+		rightRank := policy.SeverityWeight(findings[j].Severity)
 		if leftRank != rightRank {
 			return leftRank > rightRank
 		}
@@ -428,16 +428,7 @@ func sortFindings(findings []policy.Finding) {
 }
 
 func severityWeight(severity policy.Severity) int {
-	switch severity {
-	case policy.SeverityCritical:
-		return 4
-	case policy.SeverityHigh:
-		return 3
-	case policy.SeverityMedium:
-		return 2
-	default:
-		return 1
-	}
+	return policy.SeverityWeight(severity)
 }
 
 func fullyQualifiedResource(resource policy.ResourceRef) string {

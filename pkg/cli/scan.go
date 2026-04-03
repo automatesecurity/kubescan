@@ -360,7 +360,7 @@ func runScan(args []string, stdout, stderr io.Writer, deps scanDeps) int {
 	if *attackPathsEnabled {
 		attackPaths = attackpath.Analyze(inventory, findings)
 	}
-	result := report.BuildScanResultWithAttackPathsAndCompliance(findings, attackPaths, complianceReport)
+	result := report.BuildScanResultWithAttackPathsAndCompliance(findings, attackPaths, complianceReport, time.Now().UTC())
 
 	output := stdout
 	if *out != "" {

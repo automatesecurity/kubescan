@@ -23,3 +23,7 @@ func ParseSeverity(value string) (Severity, error) {
 func MeetsOrExceedsSeverity(severity, threshold Severity) bool {
 	return severityRank[severity] >= severityRank[threshold]
 }
+
+func SeverityWeight(severity Severity) int {
+	return severityRank[severity]
+}

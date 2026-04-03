@@ -33,6 +33,10 @@ func EvaluateWithProfile(inventory Inventory, profile RuleProfile) []Finding {
 }
 
 func makeFinding(rule Rule, resource ResourceRef, message string, evidence map[string]any) Finding {
+	return makeFindingAt(rule, resource, message, evidence, time.Now().UTC())
+}
+
+func makeFindingAt(rule Rule, resource ResourceRef, message string, evidence map[string]any, now time.Time) Finding {
 	sum := sha1.Sum([]byte(strings.Join([]string{
 		string(rule.Category),
 		rule.ID,
@@ -43,17 +47,17 @@ func makeFinding(rule Rule, resource ResourceRef, message string, evidence map[s
 	}, "|")))
 
 	return Finding{
-		ID:          hex.EncodeToString(sum[:8]),
+		ID:          hex.EncodeToString(sum[:12]),
 		Category:    rule.Category,
 		RuleID:      rule.ID,
 		Title:       rule.Title,
 		Severity:    rule.Severity,
-		RuleVersion: "v0",
+		RuleVersion: "v1",
 		Resource:    resource,
 		Message:     message,
 		Evidence:    evidence,
 		Remediation: rule.Remediation,
-		Timestamp:   time.Now().UTC(),
+		Timestamp:   now,
 	}
 }
 

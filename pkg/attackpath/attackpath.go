@@ -662,16 +662,7 @@ func targetRelationForTarget(targetID string) string {
 }
 
 func severityWeight(severity policy.Severity) int {
-	switch severity {
-	case policy.SeverityCritical:
-		return 4
-	case policy.SeverityHigh:
-		return 3
-	case policy.SeverityMedium:
-		return 2
-	default:
-		return 1
-	}
+	return policy.SeverityWeight(severity)
 }
 
 func dedupeResults(results []Result) []Result {
