@@ -6,7 +6,7 @@ require (
 	github.com/google/go-containerregistry v0.21.3
 	github.com/knqyf263/go-rpmdb v0.1.1
 	github.com/sigstore/sigstore-go v1.1.4
-	golang.org/x/term v0.41.0
+	golang.org/x/term v0.42.0
 	k8s.io/api v0.35.3
 	k8s.io/apimachinery v0.35.3
 	k8s.io/client-go v0.35.3
@@ -98,7 +98,7 @@ require (
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
