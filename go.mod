@@ -7,8 +7,8 @@ require (
 	github.com/knqyf263/go-rpmdb v0.1.1
 	github.com/sigstore/sigstore-go v1.1.4
 	golang.org/x/term v0.41.0
-	k8s.io/api v0.35.3
-	k8s.io/apimachinery v0.35.3
+	k8s.io/api v0.35.4
+	k8s.io/apimachinery v0.35.4
 	k8s.io/client-go v0.35.3
 	modernc.org/sqlite v1.48.0
 	sigs.k8s.io/yaml v1.6.0
